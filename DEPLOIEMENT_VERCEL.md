@@ -11,16 +11,16 @@ Le frontend appelle ensuite l'API backend via `VITE_API_URL`.
 
 ## Frontend React
 
-Le fichier `vercel.json` à la racine du dépôt est configuré pour déployer l'application web si le dépôt complet est importé :
+Le fichier `vercel.json` dans `elam_frontend` est configuré pour déployer l'application web :
 
-- Build command : `cd elam_frontend && npm ci && npm run build`
-- Output directory : `elam_frontend/dist`
+- Build command : `npm ci && npm run build`
+- Output directory : `dist`
 - Framework : Vite
 
 Dans Vercel :
 
 1. Importer le dépôt GitHub.
-2. Sélectionner le projet `elam_frontend` si Vercel affiche plusieurs applications.
+2. Sélectionner le projet `elam_frontend`.
 3. Laisser Vercel lire `vercel.json`.
 4. Ajouter la variable `VITE_API_URL` quand l'URL backend est disponible :
 
@@ -37,7 +37,7 @@ Le backend est configuré comme service Vercel depuis `elam_backend`.
 Dans Vercel :
 
 1. Importer le même dépôt GitHub une deuxième fois.
-2. Choisir `elam_backend` comme projet unique d'importation, ou définir `elam_backend` comme répertoire racine.
+2. Choisir `elam_backend` comme projet unique d'importation.
 3. Ajouter les variables d'environnement backend :
 
 - `DATABASE_URL` : URL PostgreSQL distante (Neon, Supabase, Vercel Postgres, Railway, etc.)

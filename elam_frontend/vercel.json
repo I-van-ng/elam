@@ -1,6 +1,6 @@
 {
-  "buildCommand": "cd elam_frontend && npm ci && npm run build",
-  "outputDirectory": "elam_frontend/dist",
+  "buildCommand": "npm ci && npm run build",
+  "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
     {
