@@ -3,6 +3,5 @@
 **/*.pyc
 **/*.db
 **/.env
-elam_backend
 elam_mobile_python
 elam_python

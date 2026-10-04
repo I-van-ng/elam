@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "buildCommand": "npm ci && npx prisma generate && npm run build",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/index.ts"
+    }
+  ]
+}
