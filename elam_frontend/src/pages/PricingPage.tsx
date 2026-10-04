@@ -8,7 +8,7 @@ export const PricingPage: React.FC = () => {
         {/* Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 text-xs font-bold px-3.5 py-1.5 rounded-full">
-            <Zap className="w-3.5 h-3.5" /> Modèle Économique Équitable & Transparent
+            <Zap className="w-3.5 h-3.5" /> Modèle Économique Équitable et Transparent
           </div>
           <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
             Des formules conçues pour valoriser les professionnels de santé au Gabon
@@ -18,10 +18,10 @@ export const PricingPage: React.FC = () => {
           </p>
         </div>
 
-        {/* 1. Patient & Médecins */}
+        {/* 1. Patient et Médecins */}
         <div className="space-y-6">
           <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
-            <Stethoscope className="w-5 h-5 text-blue-600" /> Formules Patients & Médecins Spécialistes
+            <Stethoscope className="w-5 h-5 text-blue-600" /> Formules Patients et Médecins Spécialistes
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -43,7 +43,7 @@ export const PricingPage: React.FC = () => {
                 <ul className="space-y-3 text-xs text-slate-700 pt-4 border-t border-slate-100">
                   <li className="flex items-start gap-2">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Recherche de pharmacies & gardes</span>
+                    <span>Recherche de pharmacies et gardes</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -55,7 +55,7 @@ export const PricingPage: React.FC = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Orientation vers hôpitaux & urgences 24/7</span>
+                    <span>Orientation vers hôpitaux et urgences 24/7</span>
                   </li>
                 </ul>
               </div>
@@ -91,7 +91,7 @@ export const PricingPage: React.FC = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <span>Agenda en ligne & prise de rendez-vous</span>
+                    <span>Agenda en ligne et prise de rendez-vous</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
@@ -143,7 +143,7 @@ export const PricingPage: React.FC = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Statistiques d'activité & acquisition patient</span>
+                    <span>Statistiques d'activité et acquisition patient</span>
                   </li>
                 </ul>
               </div>
@@ -280,7 +280,7 @@ export const PricingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Cliniques & Entreprises */}
+        {/* 3. Cliniques et Entreprises */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
           <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
@@ -288,7 +288,7 @@ export const PricingPage: React.FC = () => {
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Cabinets & Cliniques Médicales</h3>
+                <h3 className="text-xl font-bold text-slate-900">Cabinets et Cliniques Médicales</h3>
                 <p className="text-xs text-slate-500">25 000 à 50 000 FCFA / mois</p>
               </div>
             </div>

@@ -317,7 +317,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               onClick={onClose}
               className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md transition"
             >
-              Fermer & Accéder à mon espace
+              Fermer et Accéder à mon espace
             </button>
           </div>
         )}

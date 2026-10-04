@@ -229,7 +229,7 @@ export const PharmacyDashboardPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                Réservations & Demandes d'Ordonnances Reçues
+                Réservations et Demandes d'Ordonnances Reçues
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
                 Préparez les boîtes pour les patients avant leur passage au comptoir.

@@ -418,11 +418,11 @@ export const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* 5. Section: Pharmacies de Garde & Stocks */}
+      {/* 5. Section: Pharmacies de Garde et Stocks */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-            <span>🌙 Pharmacies de garde & Ouvertes</span>
+            <span>🌙 Pharmacies de garde et Ouvertes</span>
           </h3>
           <Link to="/pharmacies" className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5">
             Voir tout <ChevronRight className="w-3.5 h-3.5" />
@@ -494,7 +494,7 @@ export const HomePage: React.FC = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-            <span>🩺 Médecins & Spécialistes Disponibles</span>
+            <span>🩺 Médecins et Spécialistes Disponibles</span>
           </h3>
           <Link to="/doctors" className="text-xs font-bold text-blue-700 hover:text-blue-800 flex items-center gap-0.5">
             Voir tout <ChevronRight className="w-3.5 h-3.5" />
@@ -569,7 +569,7 @@ export const HomePage: React.FC = () => {
         </div>
         <div className="space-y-0.5">
           <h4 className="text-xs font-black text-emerald-950 uppercase tracking-tight">
-            Prise en charge CNAMGS & e-Santé Gabon
+            Prise en charge CNAMGS et e-Santé Gabon
           </h4>
           <p className="text-xs text-emerald-800/90 leading-relaxed">
             ELAM vous indique clairement les établissements et officines conventionnés pour bénéficier du tiers payant officiel au Gabon.

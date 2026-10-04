@@ -133,10 +133,10 @@ export const PharmaciesPage: React.FC = () => {
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          Pharmacies & Gardes 💊
+          Pharmacies et Gardes 💊
         </h1>
         <p className="text-xs text-slate-500 font-medium mt-0.5">
-          Officines ouvertes et stocks vérifiés à Libreville & Akanda
+          Officines ouvertes et stocks vérifiés à Libreville et Akanda
         </p>
       </div>
 

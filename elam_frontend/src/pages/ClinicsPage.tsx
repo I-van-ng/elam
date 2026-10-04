@@ -52,7 +52,7 @@ export const ClinicsPage: React.FC = () => {
             emergencyPhone247: '+241 07 20 20 20',
             hasEmergency247: true,
             acceptsCnamgs: true,
-            services: ['Urgences 24/7', 'Scanner & IRM', 'Laboratoire 24/7', 'Pédiatrie & Maternité', 'Ambulance'],
+            services: ['Urgences 24/7', 'Scanner et IRM', 'Laboratoire 24/7', 'Pédiatrie et Maternité', 'Ambulance'],
             distanceKm: 1.4,
           },
         ]);
@@ -69,10 +69,10 @@ export const ClinicsPage: React.FC = () => {
         {/* Header */}
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 bg-rose-100 text-rose-800 text-xs font-bold px-3 py-1 rounded-full">
-            <Activity className="w-3.5 h-3.5" /> Urgences Vitales & Hôpitaux Référents
+            <Activity className="w-3.5 h-3.5" /> Urgences Vitales et Hôpitaux Référents
           </div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-            Établissements Hospitaliers & Urgences 24/7
+            Établissements Hospitaliers et Urgences 24/7
           </h1>
           <p className="text-slate-500 text-sm max-w-2xl">
             Centres hospitaliers, polycliniques et maternités équipés pour les urgences médicales et examens complémentaires au Gabon.

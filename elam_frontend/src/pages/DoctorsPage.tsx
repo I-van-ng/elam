@@ -139,7 +139,7 @@ export const DoctorsPage: React.FC = () => {
             <Stethoscope className="w-3.5 h-3.5" /> Praticiens Inscrits à l'Ordre des Médecins
           </div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-            Médecins Spécialistes & Prise de Rendez-vous
+            Médecins Spécialistes et Prise de Rendez-vous
           </h1>
           <p className="text-slate-500 text-sm max-w-2xl">
             Prenez rendez-vous en cabinet, à domicile ou en téléconsultation avec des médecins vérifiés et conventionnés CNAMGS au Gabon.

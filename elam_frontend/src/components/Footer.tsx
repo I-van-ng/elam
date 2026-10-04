@@ -44,7 +44,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link to="/clinics" className="hover:text-emerald-400 transition">
-                  Services d'urgences 24/7 & Hôpitaux
+                  Services d'urgences 24/7 et Hôpitaux
                 </Link>
               </li>
               <li>
@@ -59,17 +59,17 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-xs">
               <li>
                 <Link to="/pricing" className="hover:text-emerald-400 transition">
-                  Offres Médecins & Spécialistes (CNOM)
+                  Offres Médecins et Spécialistes (CNOM)
                 </Link>
               </li>
               <li>
                 <Link to="/pricing" className="hover:text-emerald-400 transition">
-                  Solutions Officines & Gestion de Stock
+                  Solutions Officines et Gestion de Stock
                 </Link>
               </li>
               <li>
                 <Link to="/pricing" className="hover:text-emerald-400 transition">
-                  Portail Cliniques & Établissements
+                  Portail Cliniques et Établissements
                 </Link>
               </li>
               <li>
@@ -82,7 +82,7 @@ export const Footer: React.FC = () => {
 
           {/* Col 4 */}
           <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Assistance & Urgences</h4>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Assistance et Urgences</h4>
             <ul className="space-y-2 text-xs text-slate-400">
               <li className="flex items-center gap-2">
                 <PhoneCall className="w-3.5 h-3.5 text-emerald-400" /> SAMU Gabon : <strong className="text-white">1300</strong>
