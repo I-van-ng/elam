@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   HeartPulse,
   MapPin,
-  Smartphone,
-  Monitor,
   ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +12,7 @@ interface NavbarProps {
   setIsPhoneFrame: (val: boolean) => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ isPhoneFrame, setIsPhoneFrame }) => {
+export const Navbar: React.FC<NavbarProps> = () => {
   const { user, role, switchDemoUser, userLocation, setUserLocation } = useAuth();
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
@@ -58,27 +56,8 @@ export const Navbar: React.FC<NavbarProps> = ({ isPhoneFrame, setIsPhoneFrame })
           <span className="font-semibold text-slate-700">{isLocating ? 'Localisation...' : userLocation.label}</span>
         </button>
 
-        {/* Right: Frame View Switcher & Demo Role Switcher */}
+        {/* Right: Demo Role Switcher */}
         <div className="flex items-center gap-2">
-          {/* Frame toggle button */}
-          <button
-            onClick={() => setIsPhoneFrame(!isPhoneFrame)}
-            title={isPhoneFrame ? 'Passer en Plein Écran' : 'Passer en Vue Smartphone'}
-            className="hidden md:flex items-center gap-1 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200/80 px-2.5 py-1.5 rounded-xl transition tap-active"
-          >
-            {isPhoneFrame ? (
-              <>
-                <Monitor className="w-3.5 h-3.5 text-slate-500" />
-                <span>Plein écran</span>
-              </>
-            ) : (
-              <>
-                <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Vue Mobile</span>
-              </>
-            )}
-          </button>
-
           {/* Quick Demo Switcher Pill */}
           {demoMode && <div className="relative">
             <button
