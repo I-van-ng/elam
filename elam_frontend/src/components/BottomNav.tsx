@@ -8,6 +8,7 @@ import {
   Hospital,
   Siren,
   CalendarCheck,
+  ClipboardPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -23,12 +24,14 @@ export const BottomNav: React.FC<{ isPhoneFrame?: boolean }> = ({ isPhoneFrame =
     { path: '/clinics', label: 'Urgences', icon: Siren },
   ];
 
-  if (role === 'DOCTOR') {
+  if (role === 'ADMIN') {
+    navItems.push({ path: '/directory', label: 'Gérer', icon: ClipboardPlus });
+  } else if (role === 'DOCTOR') {
     navItems.push({ path: '/doctor/dashboard', label: 'Mon Agenda', icon: CalendarCheck });
   } else if (role === 'PHARMACY') {
     navItems.push({ path: '/pharmacy/dashboard', label: 'Mon Officine', icon: Pill });
   } else {
-    navItems.push({ path: '/my-appointments', label: 'Mes RDV', icon: CalendarCheck });
+    navItems.push({ path: '/my-appointments', label: 'RDV', icon: CalendarCheck });
   }
 
   return (

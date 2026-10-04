@@ -207,7 +207,7 @@ export const DoctorsPage: React.FC = () => {
         {/* Doctors Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {doctors.map((doc) => {
-            const docName = doc.user ? `Dr. ${doc.user.firstName} ${doc.user.lastName}` : 'Dr. Spécialiste';
+            const docName = doc.user ? `${doc.title || 'Dr.'} ${doc.user.firstName} ${doc.user.lastName}` : `${doc.title || 'Dr.'} Spécialiste`;
             return (
               <div
                 key={doc.id}
@@ -230,7 +230,7 @@ export const DoctorsPage: React.FC = () => {
                     <div className="flex items-center gap-1.5">
                       <h3 className="text-base font-extrabold text-slate-900">{docName}</h3>
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                        Ordre Médecins ✓
+                        {doc.title === 'Infirmier(ère)' ? 'Profession vérifiée ✓' : 'Ordre Médecins ✓'}
                       </span>
                     </div>
                     <p className="text-xs font-bold text-blue-700 mt-0.5">{doc.specialty}</p>

@@ -40,6 +40,20 @@ export class AuthController {
     }
   }
 
+  static async registerClinic(req: Request, res: Response) {
+    try {
+      const result = await AuthService.registerClinic(req.body);
+      return sendSuccess(
+        res,
+        result,
+        'Établissement créé avec succès. En attente de validation.',
+        201
+      );
+    } catch (error: any) {
+      return sendError(res, error.message || 'Erreur lors de l\'inscription de l\'établissement', 400);
+    }
+  }
+
   static async login(req: Request, res: Response) {
     try {
       const { emailOrPhone, password } = req.body;

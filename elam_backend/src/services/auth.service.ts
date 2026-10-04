@@ -62,6 +62,7 @@ export class AuthService {
     firstName: string;
     lastName: string;
     cnomNumber: string;
+    title?: string;
     specialty: string;
     subSpecialties?: string;
     bio?: string;
@@ -98,6 +99,7 @@ export class AuthService {
         doctorProfile: {
           create: {
             cnomNumber: data.cnomNumber,
+            title: data.title || 'Dr.',
             specialty: data.specialty,
             subSpecialties: data.subSpecialties,
             bio: data.bio,
@@ -184,6 +186,68 @@ export class AuthService {
       include: {
         pharmacyProfile: true,
       },
+    });
+
+    const token = this.generateToken(user);
+    const { passwordHash: _, ...userWithoutPassword } = user;
+    return { user: userWithoutPassword, token };
+  }
+
+  static async registerClinic(data: {
+    email: string;
+    phone: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    name: string;
+    type: 'CLINIC' | 'HOSPITAL';
+    address: string;
+    city?: string;
+    district?: string;
+    latitude: number;
+    longitude: number;
+    clinicPhone: string;
+    emergencyPhone247?: string;
+    hasEmergency247?: boolean;
+    acceptsCnamgs?: boolean;
+    services?: string[];
+  }) {
+    const existing = await prisma.user.findFirst({
+      where: { OR: [{ email: data.email }, { phone: data.phone }] },
+    });
+
+    if (existing) {
+      throw new Error('Un compte existe déjà avec cet email ou ce numéro de téléphone');
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, 10);
+    const user = await prisma.user.create({
+      data: {
+        email: data.email,
+        phone: data.phone,
+        passwordHash,
+        role: Role.CLINIC,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        clinicProfile: {
+          create: {
+            name: data.name,
+            type: data.type,
+            address: data.address,
+            city: data.city || 'Libreville',
+            district: data.district,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            phone: data.clinicPhone,
+            emergencyPhone247: data.emergencyPhone247,
+            hasEmergency247: data.hasEmergency247 ?? false,
+            acceptsCnamgs: data.acceptsCnamgs ?? true,
+            services: JSON.stringify(data.services || []),
+            verificationStatus: 'PENDING',
+          },
+        },
+      },
+      include: { clinicProfile: true },
     });
 
     const token = this.generateToken(user);

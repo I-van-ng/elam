@@ -12,6 +12,7 @@ import { DoctorDashboardPage } from './pages/DoctorDashboardPage';
 import { PharmacyDashboardPage } from './pages/PharmacyDashboardPage';
 import { PatientAppointmentsPage } from './pages/PatientAppointmentsPage';
 import { PricingPage } from './pages/PricingPage';
+import { DirectoryManagementPage } from './pages/DirectoryManagementPage';
 import { UserRole } from './types';
 import { useAuth } from './context/AuthContext';
 
@@ -93,6 +94,7 @@ export function App() {
                 <Route path="/doctor/dashboard" element={<ProtectedRoute role="DOCTOR"><DoctorDashboardPage /></ProtectedRoute>} />
                 <Route path="/pharmacy/dashboard" element={<ProtectedRoute role="PHARMACY"><PharmacyDashboardPage /></ProtectedRoute>} />
                 <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/directory" element={<ProtectedRoute role="ADMIN"><DirectoryManagementPage /></ProtectedRoute>} />
               </Routes>
             </main>
 

@@ -6,6 +6,7 @@ import {
   registerPatientSchema,
   registerDoctorSchema,
   registerPharmacySchema,
+  registerClinicSchema,
   loginSchema,
 } from '../schemas/auth.schema.js';
 
@@ -37,6 +38,15 @@ router.post('/register/doctor', validateRequest(registerDoctorSchema), AuthContr
  *     tags: [Authentification]
  */
 router.post('/register/pharmacy', validateRequest(registerPharmacySchema), AuthController.registerPharmacy);
+
+/**
+ * @openapi
+ * /api/v1/auth/register/clinic:
+ *   post:
+ *     summary: Inscription d'une clinique ou d'un hôpital
+ *     tags: [Authentification]
+ */
+router.post('/register/clinic', validateRequest(registerClinicSchema), AuthController.registerClinic);
 
 /**
  * @openapi

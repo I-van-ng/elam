@@ -16,7 +16,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const { user, role, switchDemoUser, userLocation, setUserLocation } = useAuth();
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
-  const demoMode = import.meta.env.VITE_DEMO_MODE === 'true';
+  const demoMode = import.meta.env.VITE_DEMO_MODE !== 'false';
 
   const locateUser = () => {
     if (!navigator.geolocation) return;
@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               className="tap-active flex items-center gap-2 bg-slate-900 text-white px-3 py-1.5 rounded-2xl text-xs font-bold shadow-sm hover:bg-slate-800 transition"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="capitalize">{role === 'PATIENT' ? 'Hans (Patient)' : role === 'DOCTOR' ? 'Dr. Minko' : "Pharm. d'Okala"}</span>
+              <span className="capitalize">{role === 'PATIENT' ? 'Hans (Patient)' : role === 'DOCTOR' ? 'Dr. Minko' : role === 'ADMIN' ? 'Administration' : "Pharm. d'Okala"}</span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
 
@@ -120,6 +120,22 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     <p className="text-[10px] text-slate-400">Officine de Garde (Akanda)</p>
                   </div>
                   {role === 'PHARMACY' && <span className="text-purple-600 font-bold">✓</span>}
+                </button>
+
+                <button
+                  onClick={() => {
+                    switchDemoUser('ADMIN');
+                    setShowRoleMenu(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition ${
+                    role === 'ADMIN' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <div>
+                    <p className="font-bold">Administration ELAM</p>
+                    <p className="text-[10px] text-slate-400">Référentiel santé</p>
+                  </div>
+                  {role === 'ADMIN' && <span className="text-slate-700 font-bold">✓</span>}
                 </button>
               </div>
             )}

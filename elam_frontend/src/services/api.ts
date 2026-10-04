@@ -63,6 +63,27 @@ class ApiService {
     return this.request<any>('/auth/me');
   }
 
+  async registerDoctor(data: Record<string, unknown>) {
+    return this.request<any>('/auth/register/doctor', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async registerPharmacy(data: Record<string, unknown>) {
+    return this.request<any>('/auth/register/pharmacy', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async registerClinic(data: Record<string, unknown>) {
+    return this.request<any>('/auth/register/clinic', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Waze Santé - Unified Search
   async searchNearby(params: {
     lat: number;

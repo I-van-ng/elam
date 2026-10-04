@@ -8,13 +8,13 @@ interface AuthContextType {
   token: string | null;
   isAuthLoading: boolean;
   userLocation: { lat: number; lng: number; label: string };
-  switchDemoUser: (role: 'PATIENT' | 'DOCTOR' | 'PHARMACY' | 'GUEST') => Promise<void>;
+  switchDemoUser: (role: 'PATIENT' | 'DOCTOR' | 'PHARMACY' | 'ADMIN' | 'GUEST') => Promise<void>;
   logout: () => void;
   setUserLocation: (loc: { lat: number; lng: number; label: string }) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== 'false';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     label: 'Akanda, Libreville 🇬🇦',
   });
 
-  const switchDemoUser = async (roleType: 'PATIENT' | 'DOCTOR' | 'PHARMACY' | 'GUEST') => {
+  const switchDemoUser = async (roleType: 'PATIENT' | 'DOCTOR' | 'PHARMACY' | 'ADMIN' | 'GUEST') => {
     if (roleType === 'GUEST') {
       setUser(null);
       setToken(null);
@@ -42,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let email = 'patient.hans@elam.ga';
     if (roleType === 'DOCTOR') email = 'dr.minko@elam.ga';
     if (roleType === 'PHARMACY') email = 'contact@pharmacie-okala.ga';
+    if (roleType === 'ADMIN') email = 'admin@elam.ga';
 
     try {
       const res = await api.login(email, 'Password123!');
@@ -118,6 +119,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             verificationStatus: 'VERIFIED',
           },
         });
+      } else if (roleType === 'ADMIN') {
+        setUser({
+          id: 'demo-admin',
+          email: 'admin@elam.ga',
+          phone: '+24107000000',
+          firstName: 'Administration',
+          lastName: 'ELAM',
+          role: 'ADMIN',
+        });
       }
     }
   };
@@ -141,7 +151,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         api.setToken(null);
         if (!cancelled) {
           setToken(null);
-          setUser(null);
+          if (DEMO_MODE) {
+            await switchDemoUser('PATIENT');
+          } else {
+            setUser(null);
+          }
         }
       } finally {
         if (!cancelled) setIsAuthLoading(false);

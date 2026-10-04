@@ -266,7 +266,7 @@ export const HomePage: React.FC = () => {
       id: d.id,
       lat: d.latitude,
       lng: d.longitude,
-      title: d.user ? `Dr. ${d.user.firstName} ${d.user.lastName}` : 'Dr. Spécialiste',
+      title: d.user ? `${d.title || 'Dr.'} ${d.user.firstName} ${d.user.lastName}` : `${d.title || 'Dr.'} Spécialiste`,
       subtitle: `${d.specialty} - ${d.consultationFee.toLocaleString()} FCFA`,
       type: 'DOCTOR' as const,
       phone: d.user?.phone,
@@ -503,7 +503,7 @@ export const HomePage: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {doctors.slice(0, 2).map((doc) => {
-            const docName = doc.user ? `Dr. ${doc.user.firstName} ${doc.user.lastName}` : 'Dr. Spécialiste';
+            const docName = doc.user ? `${doc.title || 'Dr.'} ${doc.user.firstName} ${doc.user.lastName}` : `${doc.title || 'Dr.'} Spécialiste`;
             return (
               <div
                 key={doc.id}
