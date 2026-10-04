@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd elam_frontend && npm ci && npm run build",
+  "outputDirectory": "elam_frontend/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/((?!api/.*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
