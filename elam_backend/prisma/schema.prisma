@@ -1,0 +1,260 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  phone        String    @unique
+  passwordHash String
+  role         String    @default("PATIENT") // PATIENT, DOCTOR, PHARMACY, CLINIC, ADMIN
+  firstName    String
+  lastName     String
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Associated profiles
+  patientProfile  PatientProfile?
+  doctorProfile   DoctorProfile?
+  pharmacyProfile PharmacyProfile?
+  clinicProfile   ClinicProfile?
+  subscriptions   Subscription[]
+  reviewsWritten  Review[]
+}
+
+model PatientProfile {
+  id               String                 @id @default(uuid())
+  userId           String                 @unique
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth      DateTime?
+  gender           String?
+  bloodGroup       String?
+  allergies        String?
+  city             String?                @default("Libreville")
+  district         String?
+  address          String?
+  cnamgsNumber     String?
+  privateInsurance String?
+  appointments     Appointment[]
+  reservations     MedicationReservation[]
+  favoriteDoctors  FavoriteDoctor[]
+}
+
+model DoctorProfile {
+  id                    String              @id @default(uuid())
+  userId                String              @unique
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cnomNumber            String?             // Conseil National de l'Ordre des Médecins
+  title                 String?             @default("Dr.")
+  specialty             String              // Médecine Générale, Pédiatrie, Cardiologie, etc.
+  subSpecialties        String?
+  bio                   String?
+  experienceYears       Int?                @default(0)
+  consultationFee       Int                 @default(15000) // In FCFA
+  acceptsCnamgs         Boolean             @default(true)
+  acceptsTeleconsult    Boolean             @default(false)
+  acceptsHomeVisit      Boolean             @default(false)
+  address               String
+  city                  String              @default("Libreville")
+  district              String?             // Glass, Louis, Centre-ville, Akanda
+  latitude              Float               // GPS
+  longitude             Float               // GPS
+  rating                Float               @default(5.0)
+  reviewCount           Int                 @default(0)
+  verificationStatus    String              @default("PENDING") // PENDING, VERIFIED, REJECTED
+  availabilities        DoctorAvailability[]
+  appointments          Appointment[]
+  reviews               Review[]
+  favoritedBy           FavoriteDoctor[]
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+}
+
+model DoctorAvailability {
+  id                  String        @id @default(uuid())
+  doctorId            String
+  doctor              DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  dayOfWeek           Int           // 0: Sunday, 1: Monday, ... 6: Saturday
+  startTime           String        // "08:00"
+  endTime             String        // "17:00"
+  slotDurationMinutes Int           @default(30)
+  isAvailable         Boolean       @default(true)
+}
+
+model PharmacyProfile {
+  id                 String                 @id @default(uuid())
+  userId             String                 @unique
+  user               User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String
+  licenseNumber      String?
+  address            String
+  city               String                 @default("Libreville")
+  district           String?                // Nzeng-Ayong, Louis, etc.
+  latitude           Float                  // GPS
+  longitude          Float                  // GPS
+  phone              String
+  emergencyPhone     String?
+  openingHours       String                 // "Lun-Sam: 08h-20h"
+  isOnDuty           Boolean                @default(false) // Pharmacie de garde
+  onDutyUntil        DateTime?
+  acceptsCnamgs      Boolean                @default(true)
+  rating             Float                  @default(5.0)
+  reviewCount        Int                    @default(0)
+  verificationStatus String                 @default("PENDING") // PENDING, VERIFIED, REJECTED
+  stocks             PharmacyStock[]
+  reservations       MedicationReservation[]
+  reviews            Review[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+}
+
+model Medication {
+  id                   String                  @id @default(uuid())
+  name                 String                  // ex: Doliprane 1000mg
+  genericName          String                  // DCI: Paracétamol
+  brandName            String?
+  category             String                  // ex: Antalgique, Antibiotique, etc.
+  form                 String                  // Comprimé, Sirop, Injectable
+  dosage               String                  // 500mg, 1g
+  requiresPrescription Boolean                 @default(false)
+  codeCnamgs           String?
+  description          String?
+  stocks               PharmacyStock[]
+  reservations         MedicationReservation[]
+  createdAt            DateTime                @default(now())
+}
+
+model PharmacyStock {
+  id             String          @id @default(uuid())
+  pharmacyId     String
+  pharmacy       PharmacyProfile @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  medicationId   String
+  medication     Medication      @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+  status         String          @default("IN_STOCK") // IN_STOCK, LOW_STOCK, OUT_OF_STOCK, UNVERIFIED
+  quantity       Int             @default(10)
+  priceFcfa      Int             // Prix public en FCFA
+  lastVerifiedAt DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([pharmacyId, medicationId])
+}
+
+model MedicationReservation {
+  id                   String            @id @default(uuid())
+  patientId            String
+  patient              PatientProfile    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  pharmacyId           String
+  pharmacy             PharmacyProfile   @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  medicationId         String
+  medication           Medication        @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+  quantity             Int               @default(1)
+  status               String            @default("PENDING") // PENDING, CONFIRMED, READY, COLLECTED, CANCELLED
+  prescriptionPhotoUrl String?
+  notes                String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model ClinicProfile {
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String
+  type               String             @default("CLINIC") // CLINIC, HOSPITAL, LAB, MATERNITY
+  address            String
+  city               String             @default("Libreville")
+  district           String?
+  latitude           Float
+  longitude          Float
+  phone              String
+  emergencyPhone247  String?
+  hasEmergency247    Boolean            @default(true)
+  acceptsCnamgs      Boolean            @default(true)
+  services           String?            // JSON string of offered services: ["Radiologie", "Laboratoire", "Urgences"]
+  verificationStatus String             @default("PENDING") // PENDING, VERIFIED, REJECTED
+  reviews            Review[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  patientId       String
+  patient         PatientProfile    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId        String
+  doctor          DoctorProfile     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  appointmentDate DateTime
+  startTime       String            // "14:30"
+  endTime         String            // "15:00"
+  type            String            @default("IN_PERSON") // IN_PERSON, TELECONSULTATION, HOME_VISIT
+  status          String            @default("REQUESTED") // REQUESTED, CONFIRMED, CANCELLED, COMPLETED
+  reason          String?
+  patientNotes    String?
+  doctorNotes     String?
+  feeFcfa         Int               @default(15000)
+  isPaid          Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model FavoriteDoctor {
+  id        String         @id @default(uuid())
+  patientId String
+  patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId  String
+  doctor    DoctorProfile  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+
+  @@unique([patientId, doctorId])
+}
+
+model Subscription {
+  id         String             @id @default(uuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planType   String             @default("FREE") // DOCTOR_BASIC, DOCTOR_PRO, PHARMACY_PRO, etc.
+  status     String             @default("ACTIVE") // TRIAL, ACTIVE, EXPIRED, CANCELLED
+  priceFcfa  Int                @default(0)
+  startDate  DateTime           @default(now())
+  endDate    DateTime?
+  autoRenew  Boolean            @default(true)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+}
+
+model Review {
+  id         String           @id @default(uuid())
+  authorId   String
+  author     User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  doctorId   String?
+  doctor     DoctorProfile?   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  pharmacyId String?
+  pharmacy   PharmacyProfile? @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  clinicId   String?
+  clinic     ClinicProfile?   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  rating     Int              // 1 to 5
+  comment    String?
+  createdAt  DateTime         @default(now())
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  amount          Int
+  currency        String   @default("FCFA")
+  operator        String   // AIRTEL_MONEY, MOOV_MONEY
+  phone           String
+  transactionRef  String   @unique
+  status          String   @default("COMPLETED") // PENDING, COMPLETED, FAILED
+  relatedTo       String   // APPOINTMENT, RESERVATION, SUBSCRIPTION
+  relatedId       String
+  cnamgsCovered   Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
