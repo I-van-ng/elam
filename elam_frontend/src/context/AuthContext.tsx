@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { api } from '../services/api';
+import { realDoctors, realPharmacies } from '../data/realDirectory';
 
 interface AuthContextType {
   user: User | null;
@@ -8,6 +9,9 @@ interface AuthContextType {
   token: string | null;
   isAuthLoading: boolean;
   userLocation: { lat: number; lng: number; label: string };
+  login: (emailOrPhone: string, password: string) => Promise<User>;
+  registerPatient: (data: Record<string, unknown>) => Promise<User>;
+  registerProfessional: (role: 'DOCTOR' | 'PHARMACY' | 'CLINIC', data: Record<string, unknown>) => Promise<User>;
   switchDemoUser: (role: 'PATIENT' | 'DOCTOR' | 'PHARMACY' | 'ADMIN' | 'GUEST') => Promise<void>;
   logout: () => void;
   setUserLocation: (loc: { lat: number; lng: number; label: string }) => void;
@@ -40,8 +44,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     let email = 'patient.hans@elam.ga';
-    if (roleType === 'DOCTOR') email = 'dr.minko@elam.ga';
-    if (roleType === 'PHARMACY') email = 'contact@pharmacie-okala.ga';
+    if (roleType === 'DOCTOR') email = 'dr.damas.aboghe@elam.ga';
+    if (roleType === 'PHARMACY') email = 'contact@pharmacie-saint-antoine.ga';
     if (roleType === 'ADMIN') email = 'admin@elam.ga';
 
     try {
@@ -71,53 +75,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (roleType === 'DOCTOR') {
         setUser({
           id: 'demo-doctor',
-          email: 'dr.minko@elam.ga',
-          phone: '+24107112233',
-          firstName: 'Alain',
-          lastName: 'Minko',
+          email: 'dr.damas.aboghe@elam.ga',
+          phone: '+24177850041',
+          firstName: 'Damas',
+          lastName: 'Aboghe',
           role: 'DOCTOR',
-          doctorProfile: {
-            id: 'doc-1',
-            userId: 'demo-doctor',
-            specialty: 'Cardiologie',
-            consultationFee: 25000,
-            acceptsCnamgs: true,
-            acceptsTeleconsult: true,
-            acceptsHomeVisit: false,
-            address: 'Cabinet Médical du Littoral, Glass',
-            city: 'Libreville',
-            latitude: 0.3801,
-            longitude: 9.4472,
-            rating: 4.9,
-            reviewCount: 42,
-            verificationStatus: 'VERIFIED',
-          },
+          doctorProfile: { ...realDoctors[0], userId: 'demo-doctor' },
         });
       } else if (roleType === 'PHARMACY') {
+        const demoPharmacy = realPharmacies[0];
         setUser({
           id: 'demo-pharmacy',
-          email: 'contact@pharmacie-okala.ga',
-          phone: '+24111738290',
+          email: 'contact@pharmacie-saint-antoine.ga',
+          phone: '+24174335777',
           firstName: 'Directeur',
-          lastName: 'Pharmacie Okala',
+          lastName: 'Pharmacie Saint Antoine',
           role: 'PHARMACY',
-          pharmacyProfile: {
-            id: 'pharm-1',
-            userId: 'demo-pharmacy',
-            name: 'Pharmacie d\'Okala',
-            address: 'Route Nationale 1, face Station Shell Okala',
-            city: 'Libreville',
-            district: 'Akanda',
-            latitude: 0.5182,
-            longitude: 9.4215,
-            phone: '+241 11 73 82 90',
-            openingHours: '24h/24 (Semaine de Garde)',
-            isOnDuty: true,
-            acceptsCnamgs: true,
-            rating: 4.8,
-            reviewCount: 26,
-            verificationStatus: 'VERIFIED',
-          },
+          pharmacyProfile: { ...demoPharmacy, userId: 'demo-pharmacy' },
         });
       } else if (roleType === 'ADMIN') {
         setUser({
@@ -137,9 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const restoreSession = async () => {
       if (!token) {
-        // En mode démo uniquement, on connecte automatiquement en tant que patient
-        if (DEMO_MODE) await switchDemoUser('PATIENT');
-        else setUser(null); // Mode normal : pas de connexion automatique
+        setUser(null);
         if (!cancelled) setIsAuthLoading(false);
         return;
       }
@@ -151,11 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         api.setToken(null);
         if (!cancelled) {
           setToken(null);
-          if (DEMO_MODE) {
-            await switchDemoUser('PATIENT');
-          } else {
-            setUser(null);
-          }
+          setUser(null);
         }
       } finally {
         if (!cancelled) setIsAuthLoading(false);
@@ -167,6 +135,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cancelled = true;
     };
   }, []);
+
+  const login = async (emailOrPhone: string, password: string) => {
+    const res = await api.login(emailOrPhone, password);
+    setUser(res.user);
+    setToken(res.token);
+    return res.user as User;
+  };
+
+  const registerPatient = async (data: Record<string, unknown>) => {
+    const res = await api.registerPatient(data);
+    setUser(res.user);
+    setToken(res.token);
+    return res.user as User;
+  };
+
+  const registerProfessional = async (roleType: 'DOCTOR' | 'PHARMACY' | 'CLINIC', data: Record<string, unknown>) => {
+    const res =
+      roleType === 'DOCTOR'
+        ? await api.registerDoctor(data)
+        : roleType === 'PHARMACY'
+          ? await api.registerPharmacy(data)
+          : await api.registerClinic(data);
+    setUser(res.user);
+    setToken(res.token);
+    return res.user as User;
+  };
 
   const logout = () => {
     setUser(null);
@@ -182,6 +176,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         isAuthLoading,
         userLocation,
+        login,
+        registerPatient,
+        registerProfessional,
         switchDemoUser,
         logout,
         setUserLocation,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import { HeartPulse } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
@@ -7,24 +7,27 @@ import { BottomNav } from './components/BottomNav';
 import { HomePage } from './pages/HomePage';
 import { PharmaciesPage } from './pages/PharmaciesPage';
 import { DoctorsPage } from './pages/DoctorsPage';
-import { ClinicsPage } from './pages/ClinicsPage';
+import { ClinicsPage, HospitalsPage } from './pages/ClinicsPage';
 import { DoctorDashboardPage } from './pages/DoctorDashboardPage';
 import { PharmacyDashboardPage } from './pages/PharmacyDashboardPage';
 import { PatientAppointmentsPage } from './pages/PatientAppointmentsPage';
 import { PricingPage } from './pages/PricingPage';
 import { DirectoryManagementPage } from './pages/DirectoryManagementPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { UserRole } from './types';
 import { useAuth } from './context/AuthContext';
 
 function ProtectedRoute({ role, children }: { role: UserRole; children: React.ReactElement }) {
   const { user, isAuthLoading } = useAuth();
+  const location = useLocation();
 
   if (isAuthLoading) {
     return <div className="flex min-h-[40vh] items-center justify-center text-sm font-semibold text-slate-500">Chargement de votre espace...</div>;
   }
 
   if (!user || user.role !== role) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
   return children;
@@ -86,9 +89,11 @@ export function App() {
             <main className="flex-1 overflow-x-hidden pb-24">
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
                 <Route path="/pharmacies" element={<PharmaciesPage />} />
                 <Route path="/doctors" element={<DoctorsPage />} />
-                <Route path="/hospitals" element={<ClinicsPage />} />
+                <Route path="/hospitals" element={<HospitalsPage />} />
                 <Route path="/clinics" element={<ClinicsPage />} />
                 <Route path="/my-appointments" element={<ProtectedRoute role="PATIENT"><PatientAppointmentsPage /></ProtectedRoute>} />
                 <Route path="/doctor/dashboard" element={<ProtectedRoute role="DOCTOR"><DoctorDashboardPage /></ProtectedRoute>} />

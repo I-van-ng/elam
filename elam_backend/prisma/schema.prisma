@@ -66,6 +66,7 @@ model DoctorProfile {
   district              String?             // Glass, Louis, Centre-ville, Akanda
   latitude              Float               // GPS
   longitude             Float               // GPS
+  positionConfirmed     Boolean             @default(false)
   rating                Float               @default(5.0)
   reviewCount           Int                 @default(0)
   verificationStatus    String              @default("PENDING") // PENDING, VERIFIED, REJECTED
@@ -99,6 +100,7 @@ model PharmacyProfile {
   district           String?                // Nzeng-Ayong, Louis, etc.
   latitude           Float                  // GPS
   longitude          Float                  // GPS
+  positionConfirmed  Boolean                @default(false)
   phone              String
   emergencyPhone     String?
   openingHours       String                 // "Lun-Sam: 08h-20h"
@@ -173,6 +175,7 @@ model ClinicProfile {
   district           String?
   latitude           Float
   longitude          Float
+  positionConfirmed  Boolean            @default(false)
   phone              String
   emergencyPhone247  String?
   hasEmergency247    Boolean            @default(true)

@@ -63,25 +63,40 @@ class ApiService {
     return this.request<any>('/auth/me');
   }
 
-  async registerDoctor(data: Record<string, unknown>) {
-    return this.request<any>('/auth/register/doctor', {
+  async registerPatient(data: Record<string, unknown>) {
+    const res = await this.request<{ user: any; token: string }>('/auth/register/patient', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    this.setToken(res.token);
+    return res;
+  }
+
+  async registerDoctor(data: Record<string, unknown>) {
+    const res = await this.request<{ user: any; token: string }>('/auth/register/doctor', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    this.setToken(res.token);
+    return res;
   }
 
   async registerPharmacy(data: Record<string, unknown>) {
-    return this.request<any>('/auth/register/pharmacy', {
+    const res = await this.request<{ user: any; token: string }>('/auth/register/pharmacy', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    this.setToken(res.token);
+    return res;
   }
 
   async registerClinic(data: Record<string, unknown>) {
-    return this.request<any>('/auth/register/clinic', {
+    const res = await this.request<{ user: any; token: string }>('/auth/register/clinic', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    this.setToken(res.token);
+    return res;
   }
 
   // Waze Santé - Unified Search

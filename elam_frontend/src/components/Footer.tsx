@@ -85,7 +85,7 @@ export const Footer: React.FC = () => {
             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Assistance et Urgences</h4>
             <ul className="space-y-2 text-xs text-slate-400">
               <li className="flex items-center gap-2">
-                <PhoneCall className="w-3.5 h-3.5 text-emerald-400" /> SAMU Gabon : <strong className="text-white">1300</strong>
+                <PhoneCall className="w-3.5 h-3.5 text-emerald-400" /> SAMU Social Gabonais : <strong className="text-white">1488</strong>
               </li>
               <li className="flex items-center gap-2">
                 <PhoneCall className="w-3.5 h-3.5 text-emerald-400" /> Sapeurs-Pompiers : <strong className="text-white">18</strong>

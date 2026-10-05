@@ -75,6 +75,7 @@ export class AuthService {
     district?: string;
     latitude: number;
     longitude: number;
+    positionConfirmed?: boolean;
   }) {
     const existing = await prisma.user.findFirst({
       where: {
@@ -112,6 +113,7 @@ export class AuthService {
             district: data.district,
             latitude: data.latitude,
             longitude: data.longitude,
+            positionConfirmed: data.positionConfirmed ?? false,
             verificationStatus: 'PENDING',
           },
         },
@@ -139,6 +141,7 @@ export class AuthService {
     district?: string;
     latitude: number;
     longitude: number;
+    positionConfirmed?: boolean;
     pharmacyPhone: string;
     emergencyPhone?: string;
     openingHours?: string;
@@ -174,6 +177,7 @@ export class AuthService {
             district: data.district,
             latitude: data.latitude,
             longitude: data.longitude,
+            positionConfirmed: data.positionConfirmed ?? false,
             phone: data.pharmacyPhone,
             emergencyPhone: data.emergencyPhone,
             openingHours: data.openingHours || '08h00 - 20h00',
@@ -206,6 +210,7 @@ export class AuthService {
     district?: string;
     latitude: number;
     longitude: number;
+    positionConfirmed?: boolean;
     clinicPhone: string;
     emergencyPhone247?: string;
     hasEmergency247?: boolean;
@@ -238,6 +243,7 @@ export class AuthService {
             district: data.district,
             latitude: data.latitude,
             longitude: data.longitude,
+            positionConfirmed: data.positionConfirmed ?? false,
             phone: data.clinicPhone,
             emergencyPhone247: data.emergencyPhone247,
             hasEmergency247: data.hasEmergency247 ?? false,

@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { buildGoogleMapsUrl, buildOsmUrl, formatCoordinates } from '../utils/locationLinks';
 
 // Fix for default Leaflet icon paths in Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -66,6 +67,8 @@ interface MarkerItem {
   isOnDuty?: boolean;
   phone?: string;
   badge?: string;
+  zone?: string;
+  positionConfirmed?: boolean;
 }
 
 interface HealthMapProps {
@@ -76,11 +79,25 @@ interface HealthMapProps {
 }
 
 // Helper to recenter map when center changes
-const MapRecenter: React.FC<{ center: [number, number] }> = ({ center }) => {
+const MapViewport: React.FC<{ center: [number, number]; markers: MarkerItem[]; userLocation?: [number, number] }> = ({
+  center,
+  markers,
+  userLocation,
+}) => {
   const map = useMap();
   useEffect(() => {
+    const points = [
+      ...markers.map((marker) => [marker.lat, marker.lng] as [number, number]),
+      ...(userLocation ? [userLocation] : []),
+    ];
+
+    if (points.length > 1) {
+      map.fitBounds(L.latLngBounds(points), { padding: [28, 28], maxZoom: 14 });
+      return;
+    }
+
     map.setView(center, 13);
-  }, [center, map]);
+  }, [center, map, markers, userLocation]);
   return null;
 };
 
@@ -90,10 +107,38 @@ export const HealthMap: React.FC<HealthMapProps> = ({
   userLocation,
   heightClass = 'h-80 sm:h-96',
 }) => {
+  const stats = useMemo(() => {
+    const pharmacies = markers.filter((marker) => marker.type === 'PHARMACY').length;
+    const doctors = markers.filter((marker) => marker.type === 'DOCTOR').length;
+    const clinics = markers.filter((marker) => marker.type === 'CLINIC').length;
+    const zones = Array.from(new Set(markers.map((marker) => marker.zone).filter(Boolean)));
+
+    return { pharmacies, doctors, clinics, zones };
+  }, [markers]);
+
   return (
-    <div className={`w-full ${heightClass} rounded-2xl overflow-hidden shadow-sm border border-slate-200 relative`}>
-      <MapContainer center={center} zoom={13} scrollWheelZoom={false} className="w-full h-full">
-        <MapRecenter center={center} />
+    <div className={`w-full ${heightClass} rounded-2xl overflow-hidden shadow-sm border border-slate-200 relative bg-slate-100`}>
+      <div className="absolute left-3 right-3 top-3 z-[500] flex flex-wrap items-start justify-between gap-2 pointer-events-none">
+        <div className="rounded-2xl bg-white/95 px-3 py-2 shadow-sm border border-slate-200">
+          <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Grand Libreville</p>
+          <p className="text-xs font-extrabold text-slate-900">
+            {markers.length} points visibles
+          </p>
+          <p className="text-[10px] font-semibold text-slate-500">
+            {stats.zones.slice(0, 4).join(' • ')}
+            {stats.zones.length > 4 ? ` +${stats.zones.length - 4}` : ''}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-white/95 px-3 py-2 shadow-sm border border-slate-200 flex flex-wrap gap-2 text-[10px] font-bold text-slate-600">
+          <span className="flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-amber-400" /> {stats.pharmacies} pharmacies</span>
+          <span className="flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-blue-500" /> {stats.doctors} médecins</span>
+          <span className="flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-rose-500" /> {stats.clinics} urgences</span>
+        </div>
+      </div>
+
+      <MapContainer center={center} zoom={12} scrollWheelZoom={false} className="w-full h-full">
+        <MapViewport center={center} markers={markers} userLocation={userLocation} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -105,7 +150,7 @@ export const HealthMap: React.FC<HealthMapProps> = ({
             <Popup>
               <div className="text-xs">
                 <p className="font-bold text-slate-900">📍 Votre position actuelle</p>
-                <p className="text-slate-600">Akanda, Libreville</p>
+                <p className="text-slate-600">Position patient</p>
               </div>
             </Popup>
           </Marker>
@@ -135,6 +180,8 @@ export const HealthMap: React.FC<HealthMapProps> = ({
                     )}
                   </div>
                   <p className="text-slate-600">{item.subtitle}</p>
+                  {item.zone && <p className="text-slate-500">Zone : {item.zone}</p>}
+                  <p className="text-slate-500">GPS : {formatCoordinates(item.lat, item.lng)}</p>
                   {item.phone && (
                     <p className="text-emerald-700 font-semibold flex items-center gap-1">
                       📞 {item.phone}
@@ -145,6 +192,31 @@ export const HealthMap: React.FC<HealthMapProps> = ({
                       {item.badge}
                     </span>
                   )}
+                  <div className="flex items-center gap-1 pt-1">
+                    <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                      item.positionConfirmed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                    }`}>
+                      {item.positionConfirmed ? 'Position confirmée' : 'Position à vérifier'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1 text-[11px] font-bold">
+                    <a
+                      href={buildOsmUrl(item.lat, item.lng)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-emerald-700 hover:text-emerald-800"
+                    >
+                      OSM
+                    </a>
+                    <a
+                      href={buildGoogleMapsUrl(item.lat, item.lng)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-700 hover:text-blue-800"
+                    >
+                      Google Maps
+                    </a>
+                  </div>
                 </div>
               </Popup>
             </Marker>

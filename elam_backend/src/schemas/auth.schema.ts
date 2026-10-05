@@ -33,6 +33,7 @@ export const registerDoctorSchema = z.object({
   district: z.string().optional(),
   latitude: z.number(),
   longitude: z.number(),
+  positionConfirmed: z.boolean().default(false),
 });
 
 export const registerPharmacySchema = z.object({
@@ -48,6 +49,7 @@ export const registerPharmacySchema = z.object({
   district: z.string().optional(),
   latitude: z.number(),
   longitude: z.number(),
+  positionConfirmed: z.boolean().default(false),
   pharmacyPhone: z.string().min(8, 'Numéro direct de la pharmacie'),
   emergencyPhone: z.string().optional(),
   openingHours: z.string().default('08h00 - 20h00'),
@@ -68,6 +70,7 @@ export const registerClinicSchema = z.object({
   district: z.string().optional(),
   latitude: z.number(),
   longitude: z.number(),
+  positionConfirmed: z.boolean().default(false),
   clinicPhone: z.string().min(8, 'Numéro direct de l\'établissement requis'),
   emergencyPhone247: z.string().optional(),
   hasEmergency247: z.boolean().default(false),

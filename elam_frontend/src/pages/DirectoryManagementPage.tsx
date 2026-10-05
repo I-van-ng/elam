@@ -1,6 +1,7 @@
 import React, { FormEvent, useEffect, useState } from 'react';
-import { Building2, Hospital, Plus, Stethoscope, Pill, UserRound, CheckCircle2 } from 'lucide-react';
+import { Building2, Hospital, Plus, Stethoscope, Pill, UserRound, CheckCircle2, ExternalLink, MapPin } from 'lucide-react';
 import { api } from '../services/api';
+import { buildGoogleMapsUrl, buildOsmUrl, formatCoordinates } from '../utils/locationLinks';
 
 type EntityType = 'DOCTOR' | 'NURSE' | 'PHARMACY' | 'CLINIC' | 'HOSPITAL';
 
@@ -10,6 +11,9 @@ type SavedEntry = {
   name: string;
   createdAt: string;
   pending: boolean;
+  latitude?: number;
+  longitude?: number;
+  positionConfirmed?: boolean;
 };
 
 const entityOptions: Array<{ type: EntityType; label: string; description: string; icon: React.ElementType }> = [
@@ -22,13 +26,15 @@ const entityOptions: Array<{ type: EntityType; label: string; description: strin
 
 const localStorageKey = 'elam-directory-entries';
 
-const Field = ({ label, name, required = false, type = 'text', defaultValue, placeholder }: {
+const Field = ({ label, name, required = false, type = 'text', defaultValue, placeholder, step, onChange }: {
   label: string;
   name: string;
   required?: boolean;
   type?: string;
   defaultValue?: string | number;
   placeholder?: string;
+  step?: string;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }) => (
   <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
     <span>{label}{required && <span className="text-rose-600"> *</span>}</span>
@@ -38,6 +44,8 @@ const Field = ({ label, name, required = false, type = 'text', defaultValue, pla
       required={required}
       defaultValue={defaultValue}
       placeholder={placeholder}
+      step={type === 'number' ? step : undefined}
+      onChange={onChange}
       className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
     />
   </label>
@@ -48,6 +56,7 @@ export const DirectoryManagementPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [entries, setEntries] = useState<SavedEntry[]>([]);
+  const [coordinatePreview, setCoordinatePreview] = useState({ latitude: 0.5182, longitude: 9.4215 });
 
   useEffect(() => {
     const saved = localStorage.getItem(localStorageKey);
@@ -71,6 +80,7 @@ export const DirectoryManagementPage: React.FC = () => {
       latitude: Number(value('latitude')),
       longitude: Number(value('longitude')),
     };
+    const positionConfirmed = checked('positionConfirmed');
 
     const identity = {
       email: value('email'),
@@ -82,6 +92,7 @@ export const DirectoryManagementPage: React.FC = () => {
       city: value('city'),
       district: value('district') || undefined,
       ...coordinates,
+      positionConfirmed,
     };
     const isProfessional = entityType === 'DOCTOR' || entityType === 'NURSE';
     const displayName = isProfessional
@@ -122,12 +133,30 @@ export const DirectoryManagementPage: React.FC = () => {
           services: value('services').split(',').map((service) => service.trim()).filter(Boolean),
         });
       }
-      saveLocalEntry({ id: crypto.randomUUID(), type: entityType, name: displayName, createdAt: new Date().toISOString(), pending: true });
+      saveLocalEntry({
+        id: crypto.randomUUID(),
+        type: entityType,
+        name: displayName,
+        createdAt: new Date().toISOString(),
+        pending: true,
+        ...coordinates,
+        positionConfirmed,
+      });
       event.currentTarget.reset();
+      setCoordinatePreview({ latitude: 0.5182, longitude: 9.4215 });
       setFeedback(`${displayName} a été ajouté et attend sa validation.`);
     } catch (error) {
-      saveLocalEntry({ id: crypto.randomUUID(), type: entityType, name: displayName, createdAt: new Date().toISOString(), pending: true });
+      saveLocalEntry({
+        id: crypto.randomUUID(),
+        type: entityType,
+        name: displayName,
+        createdAt: new Date().toISOString(),
+        pending: true,
+        ...coordinates,
+        positionConfirmed,
+      });
       event.currentTarget.reset();
+      setCoordinatePreview({ latitude: 0.5182, longitude: 9.4215 });
       setFeedback(`${displayName} est enregistré localement. Il sera synchronisé dès que l’API sera disponible.`);
       console.warn('Directory registration fallback:', error);
     } finally {
@@ -171,7 +200,19 @@ export const DirectoryManagementPage: React.FC = () => {
                   {entries.slice(0, 5).map((entry) => (
                     <div key={entry.id} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
                       <p className="text-sm font-bold text-slate-800">{entry.name}</p>
-                      <p className="text-xs text-amber-700">En attente de validation</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="font-semibold text-amber-700">En attente de validation</span>
+                        <span className={`font-bold ${entry.positionConfirmed ? 'text-emerald-700' : 'text-slate-400'}`}>
+                          {entry.positionConfirmed ? 'Position confirmée' : 'Position à vérifier'}
+                        </span>
+                      </div>
+                      {entry.latitude !== undefined && entry.longitude !== undefined && (
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-bold">
+                          <span className="text-slate-400">{formatCoordinates(entry.latitude, entry.longitude)}</span>
+                          <a href={buildOsmUrl(entry.latitude, entry.longitude)} target="_blank" rel="noreferrer" className="text-emerald-700 hover:text-emerald-800">OSM</a>
+                          <a href={buildGoogleMapsUrl(entry.latitude, entry.longitude)} target="_blank" rel="noreferrer" className="text-blue-700 hover:text-blue-800">Google</a>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -201,16 +242,50 @@ export const DirectoryManagementPage: React.FC = () => {
               <div className="sm:col-span-2"><Field label="Adresse" name="address" required /></div>
               <Field label="Ville" name="city" required defaultValue="Libreville" />
               <Field label="Quartier" name="district" placeholder="Akanda, Glass..." />
-              <Field label="Latitude" name="latitude" type="number" required defaultValue={0.5182} />
-              <Field label="Longitude" name="longitude" type="number" required defaultValue={9.4215} />
+              <Field
+                label="Latitude"
+                name="latitude"
+                type="number"
+                step="any"
+                required
+                defaultValue={0.5182}
+                onChange={(event) => setCoordinatePreview((current) => ({ ...current, latitude: Number(event.target.value) }))}
+              />
+              <Field
+                label="Longitude"
+                name="longitude"
+                type="number"
+                step="any"
+                required
+                defaultValue={9.4215}
+                onChange={(event) => setCoordinatePreview((current) => ({ ...current, longitude: Number(event.target.value) }))}
+              />
             </div>
 
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-3 border-y border-slate-100 py-4 text-xs font-semibold text-slate-700">
               <label className="flex items-center gap-2"><input name="acceptsCnamgs" type="checkbox" defaultChecked className="h-4 w-4 accent-emerald-600" /> Conventionné CNAMGS</label>
+              <label className="flex items-center gap-2"><input name="positionConfirmed" type="checkbox" className="h-4 w-4 accent-emerald-600" /> Position GPS confirmée</label>
               {isProfessional && <label className="flex items-center gap-2"><input name="acceptsTeleconsult" type="checkbox" className="h-4 w-4 accent-emerald-600" /> Téléconsultation</label>}
               {isProfessional && <label className="flex items-center gap-2"><input name="acceptsHomeVisit" type="checkbox" className="h-4 w-4 accent-emerald-600" /> Visite à domicile</label>}
               {entityType === 'PHARMACY' && <label className="flex items-center gap-2"><input name="isOnDuty" type="checkbox" className="h-4 w-4 accent-emerald-600" /> Pharmacie de garde</label>}
               {isFacility && <label className="flex items-center gap-2"><input name="hasEmergency247" type="checkbox" className="h-4 w-4 accent-emerald-600" /> Urgences 24/7</label>}
+            </div>
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                  <MapPin className="h-4 w-4 text-emerald-600" />
+                  Aperçu GPS : {formatCoordinates(coordinatePreview.latitude, coordinatePreview.longitude)}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                  <a href={buildOsmUrl(coordinatePreview.latitude, coordinatePreview.longitude)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1.5 text-emerald-700 shadow-sm hover:text-emerald-800">
+                    Ouvrir dans OSM <ExternalLink className="h-3 w-3" />
+                  </a>
+                  <a href={buildGoogleMapsUrl(coordinatePreview.latitude, coordinatePreview.longitude)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1.5 text-blue-700 shadow-sm hover:text-blue-800">
+                    Ouvrir dans Google Maps <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              </div>
             </div>
 
             <button disabled={isSubmitting} className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-60"><Plus className="h-4 w-4" />{isSubmitting ? 'Enregistrement...' : 'Ajouter au référentiel'}</button>

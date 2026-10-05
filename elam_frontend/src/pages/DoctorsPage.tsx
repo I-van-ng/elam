@@ -8,12 +8,15 @@ import {
   Home,
   Search,
   CalendarCheck,
-  Filter,
+  Phone,
+  ExternalLink,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { DoctorProfile } from '../types';
 import { DoctorBookingModal } from '../components/DoctorBookingModal';
+import { realDoctors } from '../data/realDirectory';
+import { buildGoogleMapsUrl, buildOsmUrl, formatCoordinates } from '../utils/locationLinks';
 
 export const DoctorsPage: React.FC = () => {
   const { userLocation } = useAuth();
@@ -38,6 +41,59 @@ export const DoctorsPage: React.FC = () => {
     'Ophtalmologie',
   ];
 
+  const normalizeDoctorName = (doc: DoctorProfile) =>
+    `${doc.user?.firstName || ''}${doc.user?.lastName || ''}`
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+
+  const hiddenDoctorNames = new Set(['christianbekale', 'alainminko', 'sylvienzamba']);
+
+  const filterLocalDoctors = (items: DoctorProfile[]) =>
+    items.filter((doc) => {
+      if (hiddenDoctorNames.has(normalizeDoctorName(doc))) {
+        return false;
+      }
+
+      const searchText = [
+        doc.user?.firstName,
+        doc.user?.lastName,
+        doc.specialty,
+        doc.subSpecialties,
+        doc.bio,
+        doc.address,
+        doc.user?.phone,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return (
+        (selectedSpecialty === 'ALL' || doc.specialty === selectedSpecialty) &&
+        (!onlyTeleconsult || doc.acceptsTeleconsult) &&
+        (!onlyCnamgs || doc.acceptsCnamgs) &&
+        (!search || searchText.includes(search.toLowerCase()))
+      );
+    });
+
+  const mergeWithLocalDoctors = (apiDoctors: DoctorProfile[]) => {
+    const merged = [...filterLocalDoctors(realDoctors)];
+    const knownNames = new Set(merged.map(normalizeDoctorName));
+
+    apiDoctors.forEach((doc) => {
+      const normalizedName = normalizeDoctorName(doc);
+      if (!hiddenDoctorNames.has(normalizedName) && !knownNames.has(normalizedName)) {
+        merged.push(doc);
+        knownNames.add(normalizedName);
+      }
+    });
+
+    return merged;
+  };
+
+  const primaryPhoneHref = (phone: string) => `tel:${phone.split('/')[0].replace(/[^\d+]/g, '')}`;
+
   const loadDoctors = async () => {
     setLoading(true);
     try {
@@ -49,77 +105,10 @@ export const DoctorsPage: React.FC = () => {
         acceptsCnamgs: onlyCnamgs ? true : undefined,
         search: search || undefined,
       });
-      setDoctors(data || []);
+      setDoctors(mergeWithLocalDoctors(data || []));
     } catch (err) {
       console.warn('Fallback doctors list:', err);
-      setDoctors([
-        {
-          id: 'doc-1',
-          userId: 'u-d-1',
-          title: 'Dr.',
-          specialty: 'Cardiologie',
-          subSpecialties: 'Échocardiographie, Hypertension artérielle',
-          bio: 'Spécialiste des pathologies cardiovasculaires avec 14 ans d\'expérience au Gabon.',
-          consultationFee: 25000,
-          acceptsCnamgs: true,
-          acceptsTeleconsult: true,
-          acceptsHomeVisit: false,
-          address: 'Cabinet Médical du Littoral, Glass',
-          city: 'Libreville',
-          district: 'Glass',
-          latitude: 0.3801,
-          longitude: 9.4472,
-          rating: 4.9,
-          reviewCount: 42,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 5.1,
-          user: { firstName: 'Alain', lastName: 'Minko' },
-        },
-        {
-          id: 'doc-2',
-          userId: 'u-d-2',
-          title: 'Dr.',
-          specialty: 'Pédiatrie',
-          subSpecialties: 'Néonatologie, Suivi du nourrisson, Vaccinations',
-          bio: 'Pédiatre passionnée par la santé infantile et le développement de l\'enfant.',
-          consultationFee: 20000,
-          acceptsCnamgs: true,
-          acceptsTeleconsult: true,
-          acceptsHomeVisit: true,
-          address: "Centre Médical d'Angondjé, Akanda",
-          city: 'Libreville',
-          district: 'Akanda',
-          latitude: 0.5255,
-          longitude: 9.4312,
-          rating: 5.0,
-          reviewCount: 58,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 1.1,
-          user: { firstName: 'Sylvie', lastName: 'Nzamba' },
-        },
-        {
-          id: 'doc-3',
-          userId: 'u-d-3',
-          title: 'Dr.',
-          specialty: 'Médecine Générale',
-          subSpecialties: 'Bilan de santé, Paludisme, Médecine de famille',
-          bio: 'Médecin généraliste à l\'écoute pour tout motif médical adulte et pédiatrique.',
-          consultationFee: 15000,
-          acceptsCnamgs: true,
-          acceptsTeleconsult: false,
-          acceptsHomeVisit: true,
-          address: 'Avenue de la Nation, Montagne Sainte',
-          city: 'Libreville',
-          district: 'Centre-ville',
-          latitude: 0.395,
-          longitude: 9.451,
-          rating: 4.7,
-          reviewCount: 31,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 4.6,
-          user: { firstName: 'Christian', lastName: 'Bekale' },
-        },
-      ]);
+      setDoctors(filterLocalDoctors(realDoctors));
     } finally {
       setLoading(false);
     }
@@ -139,10 +128,10 @@ export const DoctorsPage: React.FC = () => {
             <Stethoscope className="w-3.5 h-3.5" /> Praticiens Inscrits à l'Ordre des Médecins
           </div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-            Médecins Spécialistes et Prise de Rendez-vous
+            Médecins et Prise de Rendez-vous
           </h1>
           <p className="text-slate-500 text-sm max-w-2xl">
-            Prenez rendez-vous en cabinet, à domicile ou en téléconsultation avec des médecins vérifiés et conventionnés CNAMGS au Gabon.
+            Prenez rendez-vous avec des médecins vérifiés au Gabon. Les fiches indiquent clairement les tarifs et la prise en charge disponible.
           </p>
         </div>
 
@@ -222,7 +211,9 @@ export const DoctorsPage: React.FC = () => {
                       <span className="text-base font-black text-slate-900 block">
                         {doc.consultationFee.toLocaleString()} FCFA
                       </span>
-                      <span className="text-[10px] text-slate-400">Tarif conventionné</span>
+                      <span className="text-[10px] text-slate-400">
+                        {doc.acceptsCnamgs ? 'Tarif conventionné' : 'Sans assurance'}
+                      </span>
                     </div>
                   </div>
 
@@ -232,12 +223,23 @@ export const DoctorsPage: React.FC = () => {
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded">
                         {doc.title === 'Infirmier(ère)' ? 'Profession vérifiée ✓' : 'Ordre Médecins ✓'}
                       </span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                        doc.positionConfirmed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                      }`}>
+                        {doc.positionConfirmed ? 'Position confirmée' : 'Position à vérifier'}
+                      </span>
                     </div>
                     <p className="text-xs font-bold text-blue-700 mt-0.5">{doc.specialty}</p>
                     {doc.subSpecialties && (
-                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{doc.subSpecialties}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{doc.subSpecialties}</p>
                     )}
                   </div>
+
+                  {doc.bio && (
+                    <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 border border-slate-100 rounded-2xl p-3">
+                      {doc.bio}
+                    </p>
+                  )}
 
                   <p className="text-xs text-slate-500 flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -247,11 +249,36 @@ export const DoctorsPage: React.FC = () => {
                     )}
                   </p>
 
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+                    <span className="text-slate-400">{formatCoordinates(doc.latitude, doc.longitude)}</span>
+                    <a
+                      href={buildOsmUrl(doc.latitude, doc.longitude)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800"
+                    >
+                      OSM <ExternalLink className="w-3 h-3" />
+                    </a>
+                    <a
+                      href={buildGoogleMapsUrl(doc.latitude, doc.longitude)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-800"
+                    >
+                      Google Maps <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+
                   {/* Badges */}
                   <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px]">
                     {doc.acceptsCnamgs && (
                       <span className="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3" /> CNAMGS
+                      </span>
+                    )}
+                    {!doc.acceptsCnamgs && (
+                      <span className="bg-amber-50 text-amber-800 font-bold px-2 py-0.5 rounded-md">
+                        Absolument sans assurance
                       </span>
                     )}
                     {doc.acceptsTeleconsult && (
@@ -267,22 +294,34 @@ export const DoctorsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                    <span>{doc.rating}</span>
-                    <span className="text-slate-400 text-[10px] font-normal">({doc.reviewCount} avis)</span>
+                <div className="pt-4 border-t border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                      <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                      <span>{doc.rating}</span>
+                      <span className="text-slate-400 text-[10px] font-normal">({doc.reviewCount} avis)</span>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setSelectedDoctor(doc);
+                        setIsBookingOpen(true);
+                      }}
+                      className="shrink-0 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-md shadow-blue-600/20 flex items-center gap-1.5"
+                    >
+                      <CalendarCheck className="w-3.5 h-3.5" /> Prendre RDV
+                    </button>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setSelectedDoctor(doc);
-                      setIsBookingOpen(true);
-                    }}
-                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-md shadow-blue-600/20 flex items-center gap-1.5"
-                  >
-                    <CalendarCheck className="w-3.5 h-3.5" /> Prendre RDV
-                  </button>
+                  {doc.user?.phone && (
+                    <a
+                      href={primaryPhoneHref(doc.user.phone)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs leading-relaxed transition flex items-start gap-2 text-left"
+                    >
+                      <Phone className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      <span className="min-w-0 break-words">{doc.user.phone}</span>
+                    </a>
+                  )}
                 </div>
               </div>
             );

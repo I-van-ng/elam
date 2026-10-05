@@ -123,10 +123,10 @@ export const PharmacyDashboardPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <h1 className="text-2xl font-extrabold tracking-tight">
-                Portail Officine : Pharmacie d'Okala
+                Portail Officine : Pharmacie Saint Antoine
               </h1>
               <p className="text-emerald-200 text-xs font-semibold">
-                Route Nationale 1, Akanda (Libreville) • Licence OFF-GA-2018-091
+                Barracuda, Libreville • Tél : +241 74 33 57 77
               </p>
             </div>
           </div>

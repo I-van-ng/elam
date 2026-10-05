@@ -40,6 +40,7 @@ export interface DoctorProfile {
   district?: string;
   latitude: number;
   longitude: number;
+  positionConfirmed?: boolean;
   rating: number;
   reviewCount: number;
   verificationStatus: string;
@@ -73,6 +74,7 @@ export interface PharmacyProfile {
   district?: string;
   latitude: number;
   longitude: number;
+  positionConfirmed?: boolean;
   phone: string;
   emergencyPhone?: string;
   openingHours: string;
@@ -142,7 +144,9 @@ export interface ClinicProfile {
   district?: string;
   latitude: number;
   longitude: number;
+  positionConfirmed?: boolean;
   phone: string;
+  email?: string;
   emergencyPhone247?: string;
   hasEmergency247: boolean;
   acceptsCnamgs: boolean;

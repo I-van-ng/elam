@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search,
@@ -25,11 +25,14 @@ import { ReservationModal } from '../components/ReservationModal';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { DoctorProfile, PharmacyProfile, ClinicProfile, MedicationSearchResult, MedicationAvailabilityOffer } from '../types';
+import { realClinics, realDoctors, realPharmacies } from '../data/realDirectory';
 
 export const HomePage: React.FC = () => {
   const { user, userLocation } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showMap, setShowMap] = useState(false);
+  const [mapTypeFilter, setMapTypeFilter] = useState<'ALL' | 'PHARMACY' | 'DOCTOR' | 'CLINIC'>('ALL');
+  const [mapZoneFilter, setMapZoneFilter] = useState('Toutes zones');
 
   const [pharmacies, setPharmacies] = useState<PharmacyProfile[]>([]);
   const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
@@ -48,6 +51,61 @@ export const HomePage: React.FC = () => {
     medicationName: string;
     medicationId: string;
   } | null>(null);
+
+  const normalizeKey = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+
+  const mergePharmaciesWithLocalDirectory = (apiPharmacies: PharmacyProfile[]) => {
+    const merged = [...realPharmacies];
+    const knownNames = new Set(merged.map((pharmacy) => normalizeKey(pharmacy.name)));
+
+    apiPharmacies.forEach((pharmacy) => {
+      const normalizedName = normalizeKey(pharmacy.name);
+      if (!knownNames.has(normalizedName)) {
+        merged.push(pharmacy);
+        knownNames.add(normalizedName);
+      }
+    });
+
+    return merged;
+  };
+
+  const mergeDoctorsWithLocalDirectory = (apiDoctors: DoctorProfile[]) => {
+    const merged = [...realDoctors];
+    const knownNames = new Set(merged.map((doctor) => normalizeKey(`${doctor.user?.firstName || ''}${doctor.user?.lastName || ''}`)));
+
+    apiDoctors.forEach((doctor) => {
+      const normalizedName = normalizeKey(`${doctor.user?.firstName || ''}${doctor.user?.lastName || ''}`);
+      if (!knownNames.has(normalizedName)) {
+        merged.push(doctor);
+        knownNames.add(normalizedName);
+      }
+    });
+
+    return merged;
+  };
+
+  const mergeClinicsWithLocalDirectory = (apiClinics: ClinicProfile[]) => {
+    const merged = [...realClinics];
+    const knownNames = new Set(merged.map((clinic) => normalizeKey(clinic.name)));
+
+    apiClinics.forEach((clinic) => {
+      const normalizedName = normalizeKey(clinic.name);
+      if (!knownNames.has(normalizedName)) {
+        merged.push({
+          ...clinic,
+          emergencyPhone247: clinic.emergencyPhone247 === '1300' ? clinic.phone : clinic.emergencyPhone247,
+        });
+        knownNames.add(normalizedName);
+      }
+    });
+
+    return merged;
+  };
 
   const loadData = async (query = '') => {
     setLoading(true);
@@ -68,136 +126,19 @@ export const HomePage: React.FC = () => {
       });
 
       if (res && res.results) {
-        setPharmacies(res.results.pharmacies || []);
-        setDoctors(res.results.doctors || []);
-        setClinics(res.results.emergencyClinics || []);
+        setPharmacies(mergePharmaciesWithLocalDirectory(res.results.pharmacies || []));
+        setDoctors(mergeDoctorsWithLocalDirectory(res.results.doctors || []));
+        setClinics(mergeClinicsWithLocalDirectory(res.results.emergencyClinics || []));
       }
     } catch (err) {
       console.warn('Fallback local data:', err);
       // Fallback
-      setPharmacies([
-        {
-          id: 'pharm-1',
-          userId: 'u-p-1',
-          name: "Pharmacie d'Okala",
-          address: 'Route Nationale 1, face Station Shell Okala',
-          city: 'Libreville',
-          district: 'Akanda',
-          latitude: 0.5182,
-          longitude: 9.4215,
-          phone: '+241 11 73 82 90',
-          openingHours: '24h/24 (Semaine de Garde)',
-          isOnDuty: true,
-          acceptsCnamgs: true,
-          rating: 4.8,
-          reviewCount: 26,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 0.2,
-        },
-        {
-          id: 'pharm-2',
-          userId: 'u-p-2',
-          name: 'Grande Pharmacie Sainte-Marie',
-          address: 'Boulevard Triomphal Omar Bongo',
-          city: 'Libreville',
-          district: 'Centre-ville',
-          latitude: 0.3924,
-          longitude: 9.4542,
-          phone: '+241 11 76 23 45',
-          openingHours: '07h30 - 21h30',
-          isOnDuty: false,
-          acceptsCnamgs: true,
-          rating: 4.9,
-          reviewCount: 54,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 4.5,
-        },
-        {
-          id: 'pharm-3',
-          userId: 'u-p-3',
-          name: 'Pharmacie des Forestiers',
-          address: 'Carrefour Glass, Avenue de Cointet',
-          city: 'Libreville',
-          district: 'Glass',
-          latitude: 0.3789,
-          longitude: 9.4485,
-          phone: '+241 11 72 10 98',
-          openingHours: '08h00 - 20h00',
-          isOnDuty: false,
-          acceptsCnamgs: true,
-          rating: 4.6,
-          reviewCount: 19,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 5.2,
-        },
-      ]);
+      setPharmacies(realPharmacies);
 
-      setDoctors([
-        {
-          id: 'doc-1',
-          userId: 'u-d-1',
-          title: 'Dr.',
-          specialty: 'Cardiologie',
-          subSpecialties: 'Échocardiographie, Hypertension',
-          consultationFee: 25000,
-          acceptsCnamgs: true,
-          acceptsTeleconsult: true,
-          acceptsHomeVisit: false,
-          address: 'Cabinet Médical du Littoral, Glass',
-          city: 'Libreville',
-          district: 'Glass',
-          latitude: 0.3801,
-          longitude: 9.4472,
-          rating: 4.9,
-          reviewCount: 42,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 5.1,
-          user: { firstName: 'Alain', lastName: 'Minko' },
-        },
-        {
-          id: 'doc-2',
-          userId: 'u-d-2',
-          title: 'Dr.',
-          specialty: 'Pédiatrie',
-          subSpecialties: 'Néonatologie, Vaccins',
-          consultationFee: 20000,
-          acceptsCnamgs: true,
-          acceptsTeleconsult: true,
-          acceptsHomeVisit: true,
-          address: "Centre Médical d'Angondjé, Akanda",
-          city: 'Libreville',
-          district: 'Akanda',
-          latitude: 0.5255,
-          longitude: 9.4312,
-          rating: 5.0,
-          reviewCount: 58,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 1.1,
-          user: { firstName: 'Sylvie', lastName: 'Nzamba' },
-        },
-        {
-          id: 'doc-3',
-          userId: 'u-d-3',
-          title: 'Dr.',
-          specialty: 'Médecine Générale',
-          subSpecialties: 'Bilan de santé, Paludisme',
-          consultationFee: 15000,
-          acceptsCnamgs: true,
-          acceptsTeleconsult: false,
-          acceptsHomeVisit: true,
-          address: 'Montagne Sainte, Libreville',
-          city: 'Libreville',
-          latitude: 0.395,
-          longitude: 9.451,
-          rating: 4.7,
-          reviewCount: 31,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 4.6,
-          user: { firstName: 'Christian', lastName: 'Bekale' },
-        },
-      ]);
+      setDoctors(realDoctors);
 
       setClinics([
+        ...realClinics,
         {
           id: 'clin-1',
           userId: 'u-c-1',
@@ -208,7 +149,7 @@ export const HomePage: React.FC = () => {
           latitude: 0.391,
           longitude: 9.449,
           phone: '+241 11 76 20 00',
-          emergencyPhone247: '1300',
+          emergencyPhone247: '+241 11 76 20 00',
           hasEmergency247: true,
           acceptsCnamgs: true,
           distanceKm: 4.8,
@@ -249,6 +190,8 @@ export const HomePage: React.FC = () => {
     loadData(keyword);
   };
 
+  const namedDoctors = doctors.filter((doc) => doc.user);
+
   // Map markers
   const mapMarkers = [
     ...pharmacies.map((p) => ({
@@ -261,8 +204,10 @@ export const HomePage: React.FC = () => {
       isOnDuty: p.isOnDuty,
       phone: p.phone,
       badge: p.acceptsCnamgs ? 'CNAMGS ✓' : undefined,
+      zone: p.city === 'Owendo' ? 'Owendo' : p.city === 'Akanda' ? 'Akanda' : p.district || p.city,
+      positionConfirmed: p.positionConfirmed,
     })),
-    ...doctors.map((d) => ({
+    ...namedDoctors.map((d) => ({
       id: d.id,
       lat: d.latitude,
       lng: d.longitude,
@@ -270,7 +215,9 @@ export const HomePage: React.FC = () => {
       subtitle: `${d.specialty} - ${d.consultationFee.toLocaleString()} FCFA`,
       type: 'DOCTOR' as const,
       phone: d.user?.phone,
-      badge: d.acceptsCnamgs ? 'CNAMGS ✓' : undefined,
+      badge: d.acceptsCnamgs ? 'CNAMGS ✓' : 'Sans assurance',
+      zone: d.city === 'Owendo' ? 'Owendo' : d.city === 'Akanda' ? 'Akanda' : d.district || d.city,
+      positionConfirmed: d.positionConfirmed,
     })),
     ...clinics.map((c) => ({
       id: c.id,
@@ -281,7 +228,41 @@ export const HomePage: React.FC = () => {
       type: 'CLINIC' as const,
       phone: c.phone,
       badge: 'Urgences 24/7',
+      zone: c.city === 'Owendo' ? 'Owendo' : c.city === 'Akanda' ? 'Akanda' : c.district || c.city,
+      positionConfirmed: c.positionConfirmed,
     })),
+  ];
+
+  const mapZones = useMemo(() => {
+    const zones = Array.from(new Set(mapMarkers.map((marker) => marker.zone).filter(Boolean))) as string[];
+    const priority = ['Akanda', 'Libreville', 'Centre-ville', 'Owendo'];
+
+    return [
+      'Toutes zones',
+      ...zones.sort((a, b) => {
+        const indexA = priority.indexOf(a);
+        const indexB = priority.indexOf(b);
+        if (indexA !== -1 || indexB !== -1) {
+          return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+        }
+        return a.localeCompare(b);
+      }),
+    ];
+  }, [mapMarkers]);
+
+  const filteredMapMarkers = useMemo(() => {
+    return mapMarkers.filter((marker) => {
+      const matchesType = mapTypeFilter === 'ALL' || marker.type === mapTypeFilter;
+      const matchesZone = mapZoneFilter === 'Toutes zones' || marker.zone === mapZoneFilter;
+      return matchesType && matchesZone;
+    });
+  }, [mapMarkers, mapTypeFilter, mapZoneFilter]);
+
+  const mapFilterButtons = [
+    { label: 'Tout', value: 'ALL' as const },
+    { label: 'Pharmacies', value: 'PHARMACY' as const },
+    { label: 'Médecins', value: 'DOCTOR' as const },
+    { label: 'Urgences', value: 'CLINIC' as const },
   ];
 
   return (
@@ -293,16 +274,18 @@ export const HomePage: React.FC = () => {
             {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-0.5">
-            Bonjour {user ? user.firstName : 'Hans'} 👋
+            {user ? `Bonjour ${user.firstName}` : 'Bienvenue sur ELAM'} 👋
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Comment vous sentez-vous aujourd'hui ?
+            {user ? "Comment vous sentez-vous aujourd'hui ?" : 'Trouvez rapidement un médecin, une pharmacie ou une urgence.'}
           </p>
         </div>
 
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-emerald-500/20">
-          {user ? user.firstName[0] + user.lastName[0] : 'HM'}
-        </div>
+        {user && (
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-emerald-500/20">
+            {user.firstName[0] + user.lastName[0]}
+          </div>
+        )}
       </div>
 
       {/* 2. Modern Floating Search Bar */}
@@ -374,49 +357,83 @@ export const HomePage: React.FC = () => {
 
           {/* Tile 4: Urgences 24/7 */}
           <a
-            href="tel:1300"
+            href="tel:1488"
             className="tap-active bg-gradient-to-br from-rose-500 to-rose-600 text-white p-4 rounded-3xl shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 transition text-left flex flex-col justify-between h-28 group"
           >
             <div className="w-10 h-10 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
               🚨
             </div>
             <div>
-              <p className="text-xs font-black text-white leading-tight">Urgences 1300</p>
-              <p className="text-[10px] text-rose-100 font-semibold">SAMU Gabon</p>
+              <p className="text-xs font-black text-white leading-tight">Urgences 1488</p>
+              <p className="text-[10px] text-rose-100 font-semibold">SAMU Social</p>
             </div>
           </a>
         </div>
       </div>
 
-      {/* 4. Map View Switcher Pill */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-          <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-            Autour de vous ({userLocation.label})
-          </h2>
+      {/* 4. Map View */}
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-3.5 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <MapIcon className="w-4 h-4 text-emerald-700" />
+              Carte santé du Grand Libreville
+            </h3>
+            <p className="text-[11px] text-slate-500 font-medium">
+              Libreville, Akanda, Owendo, PK et quartiers proches
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowMap(!showMap)}
+            className="tap-active self-start sm:self-auto flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 px-3 py-1.5 rounded-full transition"
+          >
+            <MapIcon className="w-3.5 h-3.5" />
+            <span>{showMap ? 'Masquer la carte' : 'Afficher la carte'}</span>
+          </button>
         </div>
 
-        <button
-          onClick={() => setShowMap(!showMap)}
-          className="tap-active flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 px-3 py-1.5 rounded-full transition"
-        >
-          <MapIcon className="w-3.5 h-3.5" />
-          <span>{showMap ? 'Masquer la carte' : 'Afficher la carte'}</span>
-        </button>
+        {showMap && (
+          <>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="grid grid-cols-4 gap-1 bg-slate-100 rounded-2xl p-1 flex-1">
+                {mapFilterButtons.map((button) => (
+                  <button
+                    key={button.value}
+                    onClick={() => setMapTypeFilter(button.value)}
+                    className={`tap-active rounded-xl px-2 py-1.5 text-[10px] font-extrabold transition ${
+                      mapTypeFilter === button.value
+                        ? 'bg-white text-emerald-700 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    {button.label}
+                  </button>
+                ))}
+              </div>
+
+              <select
+                value={mapZoneFilter}
+                onChange={(event) => setMapZoneFilter(event.target.value)}
+                className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500"
+              >
+                {mapZones.map((zone) => (
+                  <option key={zone} value={zone}>{zone}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="animate-in fade-in zoom-in-95 duration-200">
+              <HealthMap
+                center={[userLocation.lat, userLocation.lng]}
+                markers={filteredMapMarkers}
+                userLocation={[userLocation.lat, userLocation.lng]}
+                heightClass="h-[420px] sm:h-[500px]"
+              />
+            </div>
+          </>
+        )}
       </div>
-
-      {/* Map if toggled */}
-      {showMap && (
-        <div className="animate-in fade-in zoom-in-95 duration-200">
-          <HealthMap
-            center={[userLocation.lat, userLocation.lng]}
-            markers={mapMarkers}
-            userLocation={[userLocation.lat, userLocation.lng]}
-            heightClass="h-64 sm:h-80"
-          />
-        </div>
-      )}
 
       {/* 5. Section: Pharmacies de Garde et Stocks */}
       <div className="space-y-3">
@@ -466,11 +483,16 @@ export const HomePage: React.FC = () => {
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
                   <span>{pharm.openingHours}</span>
                 </div>
+
+                <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-600">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{pharm.phone}</span>
+                </div>
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                 <a
-                  href={`tel:${pharm.phone.replace(/\s+/g, '')}`}
+                  href={`tel:${pharm.phone.split('/')[0].replace(/\s+/g, '')}`}
                   className="tap-active px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition"
                 >
                   Appeler
@@ -494,7 +516,7 @@ export const HomePage: React.FC = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-            <span>🩺 Médecins et Spécialistes Disponibles</span>
+            <span>🩺 Médecins Disponibles</span>
           </h3>
           <Link to="/doctors" className="text-xs font-bold text-blue-700 hover:text-blue-800 flex items-center gap-0.5">
             Voir tout <ChevronRight className="w-3.5 h-3.5" />
@@ -502,7 +524,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {doctors.slice(0, 2).map((doc) => {
+          {namedDoctors.slice(0, 2).map((doc) => {
             const docName = doc.user ? `${doc.title || 'Dr.'} ${doc.user.firstName} ${doc.user.lastName}` : `${doc.title || 'Dr.'} Spécialiste`;
             return (
               <div
@@ -518,11 +540,11 @@ export const HomePage: React.FC = () => {
                       <span className="text-xs font-black text-slate-900 block">
                         {doc.consultationFee.toLocaleString()} FCFA
                       </span>
-                      {doc.acceptsCnamgs && (
-                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                          CNAMGS ✓
-                        </span>
-                      )}
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                        doc.acceptsCnamgs ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'
+                      }`}>
+                        {doc.acceptsCnamgs ? 'CNAMGS ✓' : 'Sans assurance'}
+                      </span>
                     </div>
                   </div>
 
@@ -539,22 +561,39 @@ export const HomePage: React.FC = () => {
                         <strong className="text-blue-700 ml-1">({doc.distanceKm} km)</strong>
                       )}
                     </p>
+                    {doc.bio && (
+                      <p className="text-[11px] text-slate-500 leading-relaxed mt-1.5 line-clamp-2">
+                        {doc.bio}
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
-                    ★ {doc.rating}
-                  </span>
-                  <button
-                    onClick={() => {
-                      setSelectedDoctor(doc);
-                      setIsDoctorModalOpen(true);
-                    }}
-                    className="tap-active px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1"
-                  >
-                    <CalendarCheck className="w-3.5 h-3.5" /> Prendre RDV
-                  </button>
+                <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
+                      ★ {doc.rating}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setSelectedDoctor(doc);
+                        setIsDoctorModalOpen(true);
+                      }}
+                      className="tap-active shrink-0 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1"
+                    >
+                      <CalendarCheck className="w-3.5 h-3.5" /> Prendre RDV
+                    </button>
+                  </div>
+
+                  {doc.user?.phone && (
+                    <a
+                      href={`tel:${doc.user.phone.split('/')[0].replace(/[^\d+]/g, '')}`}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-semibold leading-relaxed text-slate-600 flex items-start gap-2 text-left hover:bg-slate-50 transition"
+                    >
+                      <Phone className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
+                      <span className="min-w-0 break-words">{doc.user.phone}</span>
+                    </a>
+                  )}
                 </div>
               </div>
             );
@@ -562,18 +601,21 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* 7. CNAMGS Trust Banner */}
-      <div className="bg-emerald-50 border border-emerald-200/60 rounded-3xl p-5 flex items-start gap-3.5">
-        <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20">
-          <ShieldCheck className="w-5 h-5" />
+      {/* 7. SAMU Social Banner */}
+      <div className="bg-rose-50 border border-rose-200/70 rounded-3xl p-5 flex items-start gap-3.5">
+        <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-600/20">
+          <Phone className="w-5 h-5" />
         </div>
         <div className="space-y-0.5">
-          <h4 className="text-xs font-black text-emerald-950 uppercase tracking-tight">
-            Prise en charge CNAMGS et e-Santé Gabon
+          <h4 className="text-xs font-black text-rose-950 uppercase tracking-tight">
+            SAMU Social Gabonais - 1488
           </h4>
-          <p className="text-xs text-emerald-800/90 leading-relaxed">
-            ELAM vous indique clairement les établissements et officines conventionnés pour bénéficier du tiers payant officiel au Gabon.
+          <p className="text-xs text-rose-900/90 leading-relaxed">
+            Consultations gratuites 7j/7 et 24h/24 : cardiologie, dentiste, ophtalmologie, gynécologie, ORL, kinésithérapie, psychologie, généraliste et sage-femme à domicile. Examens gratuits : radiographie, échographie pelvienne et ECG.
           </p>
+          <a href="tel:1488" className="inline-flex items-center gap-1 text-xs font-black text-rose-700 pt-1">
+            Appeler le 1488 <ChevronRight className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
 

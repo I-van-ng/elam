@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, Clock, Stethoscope, Video, MapPin, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { api } from '../services/api';
 import { Appointment } from '../types';
+import { realDoctors } from '../data/realDirectory';
 
 export const PatientAppointmentsPage: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -26,27 +27,10 @@ export const PatientAppointmentsPage: React.FC = () => {
             endTime: '10:00',
             type: 'IN_PERSON',
             status: 'CONFIRMED',
-            reason: 'Bilan cardiaque et contrôle tensionnel annuel',
-            feeFcfa: 25000,
+            reason: 'Consultation médicale générale',
+            feeFcfa: 7500,
             isPaid: false,
-            doctor: {
-              id: 'doc-1',
-              userId: 'u-d-1',
-              title: 'Dr.',
-              specialty: 'Cardiologie',
-              consultationFee: 25000,
-              acceptsCnamgs: true,
-              acceptsTeleconsult: true,
-              acceptsHomeVisit: false,
-              address: 'Cabinet Médical du Littoral, Glass',
-              city: 'Libreville',
-              latitude: 0.3801,
-              longitude: 9.4472,
-              rating: 4.9,
-              reviewCount: 42,
-              verificationStatus: 'VERIFIED',
-              user: { firstName: 'Alain', lastName: 'Minko' },
-            },
+            doctor: realDoctors[0],
           },
         ]);
       } finally {
@@ -84,7 +68,7 @@ export const PatientAppointmentsPage: React.FC = () => {
             </div>
           ) : (
             appointments.map((apt) => {
-              const docName = apt.doctor?.user ? `Dr. ${apt.doctor.user.firstName} ${apt.doctor.user.lastName}` : 'Dr. Alain Minko';
+              const docName = apt.doctor?.user ? `Dr. ${apt.doctor.user.firstName} ${apt.doctor.user.lastName}` : 'Dr. Damas Aboghe';
               return (
                 <div
                   key={apt.id}
@@ -98,15 +82,16 @@ export const PatientAppointmentsPage: React.FC = () => {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-extrabold text-base text-slate-900">{docName}</h3>
-                          {apt.doctor?.acceptsCnamgs && (
-                            <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <ShieldCheck className="w-3 h-3" /> CNAMGS
-                            </span>
-                          )}
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                            apt.doctor?.acceptsCnamgs ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                          }`}>
+                            {apt.doctor?.acceptsCnamgs && <ShieldCheck className="w-3 h-3" />}
+                            {apt.doctor?.acceptsCnamgs ? 'CNAMGS' : 'Sans assurance'}
+                          </span>
                         </div>
-                        <p className="text-xs font-semibold text-blue-700">{apt.doctor?.specialty || 'Cardiologie'}</p>
+                        <p className="text-xs font-semibold text-blue-700">{apt.doctor?.specialty || 'Médecine Générale'}</p>
                         <p className="text-xs text-slate-500 flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" /> {apt.doctor?.address || 'Cabinet Médical du Littoral, Glass'}
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" /> {apt.doctor?.address || 'Cabinet Médical du PK9'}
                         </p>
                       </div>
                     </div>

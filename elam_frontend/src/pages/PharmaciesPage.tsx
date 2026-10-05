@@ -10,12 +10,15 @@ import {
   AlertTriangle,
   ShoppingBag,
   Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { PharmacyProfile, MedicationSearchResult, MedicationAvailabilityOffer } from '../types';
 import { MedicationAvailabilityModal } from '../components/MedicationAvailabilityModal';
 import { ReservationModal } from '../components/ReservationModal';
+import { realPharmacies } from '../data/realDirectory';
+import { buildGoogleMapsUrl, buildOsmUrl, formatCoordinates } from '../utils/locationLinks';
 
 export const PharmaciesPage: React.FC = () => {
   const { userLocation } = useAuth();
@@ -35,6 +38,38 @@ export const PharmaciesPage: React.FC = () => {
     medicationId: string;
   } | null>(null);
 
+  const normalizeName = (name: string) =>
+    name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+
+  const filterLocalPharmacies = (items: PharmacyProfile[]) =>
+    items.filter((pharm) => {
+      const searchText = `${pharm.name} ${pharm.address} ${pharm.district} ${pharm.phone}`.toLowerCase();
+      return (
+        (!onlyDuty || pharm.isOnDuty) &&
+        (!onlyCnamgs || pharm.acceptsCnamgs) &&
+        (!search || searchText.includes(search.toLowerCase()))
+      );
+    });
+
+  const mergeWithLocalDirectory = (apiPharmacies: PharmacyProfile[]) => {
+    const merged = [...filterLocalPharmacies(realPharmacies)];
+    const knownNames = new Set(merged.map((pharm) => normalizeName(pharm.name)));
+
+    apiPharmacies.forEach((pharm) => {
+      const normalizedName = normalizeName(pharm.name);
+      if (!knownNames.has(normalizedName)) {
+        merged.push(pharm);
+        knownNames.add(normalizedName);
+      }
+    });
+
+    return merged;
+  };
+
   const loadPharmacies = async () => {
     try {
       const data = await api.listPharmacies({
@@ -45,66 +80,10 @@ export const PharmaciesPage: React.FC = () => {
         acceptsCnamgs: onlyCnamgs ? true : undefined,
         search: search || undefined,
       });
-      setPharmacies(data || []);
+      setPharmacies(mergeWithLocalDirectory(data || []));
     } catch (err) {
       console.warn('Fallback pharmacies list:', err);
-      setPharmacies([
-        {
-          id: 'pharm-1',
-          userId: 'u-p-1',
-          name: "Pharmacie d'Okala",
-          address: 'Route Nationale 1, face Station Shell Okala',
-          city: 'Libreville',
-          district: 'Akanda',
-          latitude: 0.5182,
-          longitude: 9.4215,
-          phone: '+241 11 73 82 90',
-          emergencyPhone: '+241 07 44 22 11',
-          openingHours: '24h/24 (Semaine de Garde)',
-          isOnDuty: true,
-          acceptsCnamgs: true,
-          rating: 4.8,
-          reviewCount: 26,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 0.2,
-        },
-        {
-          id: 'pharm-2',
-          userId: 'u-p-2',
-          name: 'Grande Pharmacie Sainte-Marie',
-          address: 'Boulevard Triomphal Omar Bongo',
-          city: 'Libreville',
-          district: 'Centre-ville',
-          latitude: 0.3924,
-          longitude: 9.4542,
-          phone: '+241 11 76 23 45',
-          openingHours: '07h30 - 21h30',
-          isOnDuty: false,
-          acceptsCnamgs: true,
-          rating: 4.9,
-          reviewCount: 54,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 4.5,
-        },
-        {
-          id: 'pharm-3',
-          userId: 'u-p-3',
-          name: 'Pharmacie des Forestiers',
-          address: 'Carrefour Glass, Avenue de Cointet',
-          city: 'Libreville',
-          district: 'Glass',
-          latitude: 0.3789,
-          longitude: 9.4485,
-          phone: '+241 11 72 10 98',
-          openingHours: '08h00 - 20h00',
-          isOnDuty: false,
-          acceptsCnamgs: true,
-          rating: 4.6,
-          reviewCount: 19,
-          verificationStatus: 'VERIFIED',
-          distanceKm: 5.2,
-        },
-      ]);
+      setPharmacies(filterLocalPharmacies(realPharmacies));
     }
   };
 
@@ -136,7 +115,7 @@ export const PharmaciesPage: React.FC = () => {
           Pharmacies de garde
         </h1>
         <p className="text-xs text-slate-500 font-medium mt-0.5">
-          Officines ouvertes et stocks vérifiés à Libreville et Akanda
+          Officines et numéros de garde à Libreville, Akanda, Owendo et PK
         </p>
       </div>
 
@@ -218,6 +197,11 @@ export const PharmaciesPage: React.FC = () => {
                       CNAMGS ✓
                     </span>
                   )}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    pharm.positionConfirmed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                  }`}>
+                    {pharm.positionConfirmed ? 'Position confirmée' : 'Position à vérifier'}
+                  </span>
                 </div>
 
                 <p className="text-xs text-slate-500 flex items-center gap-1">
@@ -231,12 +215,32 @@ export const PharmaciesPage: React.FC = () => {
                 <p className="text-[11px] text-slate-400 flex items-center gap-1">
                   <Clock className="w-3 h-3" /> Horaires : {pharm.openingHours}
                 </p>
+
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+                  <span className="text-slate-400">{formatCoordinates(pharm.latitude, pharm.longitude)}</span>
+                  <a
+                    href={buildOsmUrl(pharm.latitude, pharm.longitude)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800"
+                  >
+                    OSM <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <a
+                    href={buildGoogleMapsUrl(pharm.latitude, pharm.longitude)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-800"
+                  >
+                    Google Maps <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
               </div>
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
               <a
-                href={`tel:${pharm.phone.replace(/\s+/g, '')}`}
+                href={`tel:${pharm.phone.split('/')[0].replace(/\s+/g, '')}`}
                 className="tap-active flex-1 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold text-center transition flex items-center justify-center gap-1"
               >
                 <Phone className="w-3.5 h-3.5 text-slate-400" /> Appeler ({pharm.phone})

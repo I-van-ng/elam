@@ -231,11 +231,12 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
                 <span className="text-slate-500">Tarif consultation :</span>
                 <strong className="text-slate-900 ml-1 font-extrabold">{doctor.consultationFee.toLocaleString()} FCFA</strong>
               </div>
-              {doctor.acceptsCnamgs && (
-                <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> CNAMGS Prise en charge
-                </span>
-              )}
+              <span className={`font-bold px-2 py-0.5 rounded-md flex items-center gap-1 ${
+                doctor.acceptsCnamgs ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'
+              }`}>
+                {doctor.acceptsCnamgs && <ShieldCheck className="w-3.5 h-3.5" />}
+                {doctor.acceptsCnamgs ? 'CNAMGS Prise en charge' : 'Sans assurance'}
+              </span>
             </div>
 
             <button

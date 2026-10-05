@@ -37,8 +37,8 @@ export const DoctorDashboardPage: React.FC = () => {
           endTime: '10:00',
           type: 'IN_PERSON',
           status: 'REQUESTED',
-          reason: 'Bilan cardiaque et contrôle tensionnel annuel',
-          feeFcfa: 25000,
+          reason: 'Consultation médicale générale',
+          feeFcfa: 7500,
           isPaid: false,
           patient: {
             user: {
@@ -56,10 +56,10 @@ export const DoctorDashboardPage: React.FC = () => {
           appointmentDate: '2026-09-10',
           startTime: '10:30',
           endTime: '11:00',
-          type: 'TELECONSULTATION',
+          type: 'IN_PERSON',
           status: 'CONFIRMED',
-          reason: 'Suivi traitement antihypertenseur',
-          feeFcfa: 25000,
+          reason: 'Suivi patient et soins',
+          feeFcfa: 7500,
           isPaid: true,
           patient: {
             user: {
@@ -111,11 +111,11 @@ export const DoctorDashboardPage: React.FC = () => {
                   Espace Praticien : Dr. {user?.firstName} {user?.lastName}
                 </h1>
                 <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> CNOM Vérifié
+                  <ShieldCheck className="w-3.5 h-3.5" /> Profil vérifié
                 </span>
               </div>
               <p className="text-blue-200 text-xs font-semibold">
-                Cardiologie • Cabinet Médical du Littoral (Glass, Libreville)
+                Médecine Générale • Cabinet Médical du PK9, après la brigade du PK9
               </p>
             </div>
           </div>
@@ -123,11 +123,11 @@ export const DoctorDashboardPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <div className="bg-slate-800/80 border border-slate-700/80 px-4 py-2.5 rounded-2xl text-center">
               <span className="text-[10px] text-slate-400 block uppercase font-bold">Abonnement</span>
-              <strong className="text-emerald-400 text-xs font-bold">Médecin PRO ✓</strong>
+              <strong className="text-emerald-400 text-xs font-bold">Médecin BASIC ✓</strong>
             </div>
             <div className="bg-slate-800/80 border border-slate-700/80 px-4 py-2.5 rounded-2xl text-center">
               <span className="text-[10px] text-slate-400 block uppercase font-bold">Tarif consultation</span>
-              <strong className="text-white text-xs font-bold">25 000 FCFA</strong>
+              <strong className="text-white text-xs font-bold">7 500 FCFA</strong>
             </div>
           </div>
         </div>
@@ -160,8 +160,8 @@ export const DoctorDashboardPage: React.FC = () => {
 
           <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-medium">Téléconsultations actives</span>
-              <h3 className="text-2xl font-black text-blue-600">1</h3>
+              <span className="text-xs text-slate-500 font-medium">Consultations au cabinet</span>
+              <h3 className="text-2xl font-black text-blue-600">{appointments.length}</h3>
             </div>
             <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-bold">
               📹
