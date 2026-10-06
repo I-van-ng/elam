@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, Calendar, Clock, Stethoscope, Video, Home, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { DoctorProfile } from '../types';
+import { Appointment, DoctorProfile } from '../types';
 import { api } from '../services/api';
+import { PaymentModal } from './PaymentModal';
 
 interface DoctorBookingModalProps {
   isOpen: boolean;
@@ -25,6 +26,9 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pendingAppointment, setPendingAppointment] = useState<Appointment | null>(null);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [paymentDone, setPaymentDone] = useState(false);
 
   if (!isOpen || !doctor) return null;
 
@@ -48,7 +52,7 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
     setLoading(true);
     setErrorMessage(null);
     try {
-      await api.bookAppointment({
+      const appointment = await api.bookAppointment({
         doctorId: doctor.id,
         appointmentDate,
         startTime: selectedSlot,
@@ -57,12 +61,10 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
         reason,
       });
 
-      setSuccessMessage(`Votre rendez-vous a bien été transmis au cabinet du ${doctorName}.`);
-      setTimeout(() => {
-        setSuccessMessage(null);
-        onSuccess();
-        onClose();
-      }, 2000);
+      setPendingAppointment(appointment);
+      setPaymentDone(false);
+      setSuccessMessage(`Votre rendez-vous est enregistré. Finalisez le paiement mobile money pour confirmer le créneau.`);
+      setIsPaymentOpen(true);
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : 'Impossible de transmettre le rendez-vous.');
     } finally {
@@ -99,7 +101,10 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              setIsPaymentOpen(false);
+              onClose();
+            }}
             aria-label="Fermer"
             className="p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
           >
@@ -113,7 +118,7 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h4 className="text-lg font-bold text-slate-900">Rendez-vous Envoyé !</h4>
+            <h4 className="text-lg font-bold text-slate-900">{paymentDone ? 'Rendez-vous Confirmé !' : 'Rendez-vous Enregistré'}</h4>
             <p className="text-xs text-slate-600 max-w-sm mx-auto">{successMessage}</p>
           </div>
         ) : (
@@ -249,6 +254,28 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
           </form>
         )}
       </div>
+
+      <PaymentModal
+        isOpen={isPaymentOpen && !!pendingAppointment}
+        onClose={() => {
+          setIsPaymentOpen(false);
+          if (paymentDone) {
+            setSuccessMessage(null);
+            setPendingAppointment(null);
+            onSuccess();
+            onClose();
+          }
+        }}
+        serviceTitle={`Rendez-vous ${doctorName}`}
+        totalAmount={doctor.consultationFee}
+        isCnamgsEligible={doctor.acceptsCnamgs}
+        relatedTo="APPOINTMENT"
+        relatedId={pendingAppointment?.id}
+        onSuccess={() => {
+          setPaymentDone(true);
+          setSuccessMessage(`Paiement validé. Le créneau du ${appointmentDate} à ${selectedSlot} est confirmé.`);
+        }}
+      />
     </div>
   );
 };

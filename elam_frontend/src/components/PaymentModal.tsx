@@ -23,7 +23,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   relatedId,
   onSuccess,
 }) => {
-  const [phone, setPhone] = useState('+241 07 69 50 40');
+  const [phone, setPhone] = useState('');
   const [selectedOperator, setSelectedOperator] = useState<'AIRTEL_MONEY' | 'MOOV_MONEY'>('AIRTEL_MONEY');
   const [applyCnamgs, setApplyCnamgs] = useState(isCnamgsEligible);
   const [step, setStep] = useState<'FORM' | 'USSD_PUSH' | 'RECEIPT'>('FORM');
@@ -37,18 +37,26 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const cnamgsCoverage = applyCnamgs && isCnamgsEligible ? Math.floor(totalAmount * 0.8) : 0;
   const netAmount = totalAmount - cnamgsCoverage;
 
-  const handlePhoneChange = (val: string) => {
-    setPhone(val);
+  const detectOperatorFromPhone = (val: string): 'AIRTEL_MONEY' | 'MOOV_MONEY' | null => {
     const cleaned = val.replace(/\D/g, '');
     let local = cleaned;
     if (local.startsWith('241')) local = local.slice(3);
     if (local.startsWith('0')) local = local.slice(1);
 
     if (['74', '76', '77', '11'].some((p) => local.startsWith(p))) {
-      setSelectedOperator('AIRTEL_MONEY');
-    } else if (['62', '65', '66'].some((p) => local.startsWith(p))) {
-      setSelectedOperator('MOOV_MONEY');
+      return 'AIRTEL_MONEY';
     }
+    if (['62', '65', '66'].some((p) => local.startsWith(p))) {
+      return 'MOOV_MONEY';
+    }
+
+    return null;
+  };
+
+  const handlePhoneChange = (val: string) => {
+    setPhone(val);
+    const detected = detectOperatorFromPhone(val);
+    if (detected) setSelectedOperator(detected);
   };
 
   const handleTriggerUssd = () => {
@@ -56,11 +64,26 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setErrorMessage('Cette opération ne possède pas encore de référence à régler.');
       return;
     }
+    const detected = detectOperatorFromPhone(phone);
+    if (!detected) {
+      setErrorMessage('Entrez un numéro Airtel Money (074, 076, 077, 011) ou Moov Money (062, 065, 066).');
+      return;
+    }
+    if (detected !== selectedOperator) {
+      setErrorMessage(`Ce numéro correspond à ${detected === 'AIRTEL_MONEY' ? 'Airtel Money' : 'Moov Money'}.`);
+      setSelectedOperator(detected);
+      return;
+    }
     setErrorMessage(null);
     setStep('USSD_PUSH');
   };
 
   const handleConfirmUssd = async () => {
+    if (!/^\d{4}$/.test(pin)) {
+      setErrorMessage('Le code PIN doit contenir 4 chiffres.');
+      return;
+    }
+
     setLoading(true);
     setErrorMessage(null);
     try {

@@ -1,18 +1,26 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
 
-export function detectOperator(phone: string): 'AIRTEL_MONEY' | 'MOOV_MONEY' {
+type MobileMoneyOperator = 'AIRTEL_MONEY' | 'MOOV_MONEY';
+
+function normalizeGabonPhone(phone: string) {
   const cleaned = (phone || '').replace(/\D/g, '');
   let local = cleaned;
   if (local.startsWith('241')) local = local.slice(3);
   if (local.startsWith('0')) local = local.slice(1);
+
+  return local;
+}
+
+export function detectOperator(phone: string): MobileMoneyOperator | null {
+  const local = normalizeGabonPhone(phone);
 
   if (['74', '76', '77', '11'].some(prefix => local.startsWith(prefix))) {
     return 'AIRTEL_MONEY';
   } else if (['62', '65', '66'].some(prefix => local.startsWith(prefix))) {
     return 'MOOV_MONEY';
   }
-  return 'AIRTEL_MONEY';
+  return null;
 }
 
 export async function initiatePayment(req: Request, res: Response) {
@@ -23,7 +31,34 @@ export async function initiatePayment(req: Request, res: Response) {
       return res.status(400).json({ success: false, message: 'Paramètres manquants (amount, phone, relatedTo, relatedId).' });
     }
 
-    const op = operator || detectOperator(phone);
+    if (!Number.isInteger(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Le montant du paiement est invalide.' });
+    }
+
+    if (!['APPOINTMENT', 'RESERVATION', 'SUBSCRIPTION'].includes(relatedTo)) {
+      return res.status(400).json({ success: false, message: 'Type de paiement non pris en charge.' });
+    }
+
+    const detectedOperator = detectOperator(phone);
+    if (!detectedOperator) {
+      return res.status(400).json({
+        success: false,
+        message: 'Numéro mobile money gabonais invalide. Airtel: 074/076/077/011, Moov: 062/065/066.',
+      });
+    }
+
+    const op = (operator || detectedOperator) as MobileMoneyOperator;
+    if (!['AIRTEL_MONEY', 'MOOV_MONEY'].includes(op)) {
+      return res.status(400).json({ success: false, message: 'Opérateur mobile money non pris en charge.' });
+    }
+
+    if (operator && operator !== detectedOperator) {
+      return res.status(400).json({
+        success: false,
+        message: `Le numéro renseigné correspond à ${detectedOperator === 'AIRTEL_MONEY' ? 'Airtel Money' : 'Moov Money'}.`,
+      });
+    }
+
     const cnamgsCovered = applyCnamgs ? Math.floor(amount * 0.8) : 0;
     const netAmount = amount - cnamgsCovered;
 

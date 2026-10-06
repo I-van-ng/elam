@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, ShoppingBag, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
-import { MedicationAvailabilityOffer } from '../types';
+import { MedicationAvailabilityOffer, MedicationReservation } from '../types';
 import { api } from '../services/api';
+import { PaymentModal } from './PaymentModal';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -23,6 +24,9 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pendingReservation, setPendingReservation] = useState<MedicationReservation | null>(null);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [paymentDone, setPaymentDone] = useState(false);
 
   if (!isOpen || !offer) return null;
 
@@ -38,17 +42,15 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     setErrorMessage(null);
 
     try {
-      await api.createReservation({
+      const reservation = await api.createReservation({
         pharmacyId: offer.pharmacyId,
         medicationId,
         quantity,
         notes,
       });
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 2000);
+      setPendingReservation(reservation);
+      setPaymentDone(false);
+      setIsPaymentOpen(true);
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : 'Impossible de transmettre la réservation.');
     } finally {
@@ -84,7 +86,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h4 className="text-lg font-bold text-slate-900">Demande Transmise !</h4>
+            <h4 className="text-lg font-bold text-slate-900">{paymentDone ? 'Réservation Payée !' : 'Demande Transmise !'}</h4>
             <p className="text-xs text-slate-600">
               L'officine <strong>{offer.pharmacyName}</strong> a été notifiée et prépare votre commande. Vous recevrez une alerte dès qu'elle sera prête au comptoir.
             </p>
@@ -158,6 +160,27 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
           </form>
         )}
       </div>
+
+      <PaymentModal
+        isOpen={isPaymentOpen && !!pendingReservation}
+        onClose={() => {
+          setIsPaymentOpen(false);
+          if (paymentDone) {
+            setSuccess(false);
+            setPendingReservation(null);
+            onClose();
+          }
+        }}
+        serviceTitle={`Réservation ${medicationName}`}
+        totalAmount={totalPrice}
+        isCnamgsEligible={offer.acceptsCnamgs}
+        relatedTo="RESERVATION"
+        relatedId={pendingReservation?.id}
+        onSuccess={() => {
+          setPaymentDone(true);
+          setSuccess(true);
+        }}
+      />
     </div>
   );
 };
