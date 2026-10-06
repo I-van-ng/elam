@@ -1,11 +1,40 @@
+import crypto from 'crypto';
 import dotenv from 'dotenv';
 dotenv.config();
+
+/**
+ * Secret de signature des jetons JWT.
+ *
+ * Il n'y a PLUS de valeur par defaut ecrite en dur : l'ancien secret figurait
+ * dans le depot (public) et permettait donc de forger n'importe quel jeton,
+ * y compris un jeton ADMIN. On exige desormais une vraie configuration.
+ */
+function resolveJwtSecret(): string {
+  const value = process.env.JWT_SECRET;
+
+  if (value && value.length >= 16) {
+    return value;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'JWT_SECRET est obligatoire en production (16 caracteres minimum). ' +
+        "Definis-le dans les variables d'environnement de l'hebergeur."
+    );
+  }
+
+  console.warn(
+    '[SECURITE] JWT_SECRET absent en developpement : un secret temporaire est genere. ' +
+      'Les jetons emis seront invalides au prochain demarrage.'
+  );
+  return crypto.randomBytes(32).toString('hex');
+}
 
 export const ENV = {
   PORT: parseInt(process.env.PORT || '5000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
-  JWT_SECRET: process.env.JWT_SECRET || 'elam_jwt_super_secret_key_gabon_2026_e_health',
+  JWT_SECRET: resolveJwtSecret(),
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
 

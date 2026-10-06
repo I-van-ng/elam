@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Modèle Économique & Tarifs | ELAM Gabon{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="text-center space-y-2 max-w-2xl mx-auto">
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+      Tarification & Modèle Économique ELAM
+    </h1>
+    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+      L'accès au réseau et la prise de rendez-vous restent <strong>100% gratuits pour tous les patients</strong>. Les professionnels et structures souscrivent à des services de gestion numérique performants.
+    </p>
+  </div>
+
+  <!-- Pricing Cards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <!-- Card 1: Patient -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between space-y-5">
+      <div class="space-y-3">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
+          Grand Public
+        </span>
+        <h2 class="text-xl font-bold text-slate-900">Patient</h2>
+        <div>
+          <span class="text-3xl font-black text-slate-900">0</span>
+          <span class="text-xs font-bold text-slate-500">FCFA / mois</span>
+        </div>
+        <p class="text-xs text-slate-500">Accès gratuit et universel pour tous les résidents au Gabon.</p>
+
+        <ul class="space-y-2 text-xs text-slate-700 pt-3 border-t border-slate-100">
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Recherche de pharmacies & gardes
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Vérification des stocks déclarés
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Prise de rendez-vous en ligne
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Orientation vers urgences 24/7
+          </li>
+        </ul>
+      </div>
+
+      <div class="py-2 bg-emerald-50 text-emerald-800 text-xs font-bold text-center rounded-xl">
+        Inclus sans frais
+      </div>
+    </div>
+
+    <!-- Card 2: Médecin PRO -->
+    <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col justify-between space-y-5 border-2 border-emerald-600">
+      <div class="space-y-3">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded">
+          Praticien Agréé
+        </span>
+        <h2 class="text-xl font-bold">Médecin PRO</h2>
+        <div>
+          <span class="text-3xl font-black text-white">10 000</span>
+          <span class="text-xs font-bold text-slate-400">FCFA / mois</span>
+        </div>
+        <p class="text-xs text-slate-300">Agenda médical, vérification CNOM et téléconsultation.</p>
+
+        <ul class="space-y-2 text-xs text-slate-200 pt-3 border-t border-slate-800">
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Profil certifié Ordre des Médecins
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Module de Téléconsultation médicale
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Visibilité prioritaire dans les recherches
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Rappels automatiques aux patients
+          </li>
+        </ul>
+      </div>
+
+      <button class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition">
+        Souscrire Médecin PRO
+      </button>
+    </div>
+
+    <!-- Card 3: Pharmacie PRO -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between space-y-5">
+      <div class="space-y-3">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-purple-800 bg-purple-50 px-2 py-0.5 rounded">
+          Officine de Pharmacie
+        </span>
+        <h2 class="text-xl font-bold text-slate-900">Pharmacie PRO</h2>
+        <div>
+          <span class="text-3xl font-black text-slate-900">15 000</span>
+          <span class="text-xs font-bold text-slate-500">FCFA / mois</span>
+        </div>
+        <p class="text-xs text-slate-500">Outil de gestion des stocks et acquisition de patients.</p>
+
+        <ul class="space-y-2 text-xs text-slate-700 pt-3 border-t border-slate-100">
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-purple-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Mise à jour en temps réel des stocks
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-purple-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Bascule de tour de garde en 1 clic
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-purple-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Réception des réservations d'ordonnance
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-purple-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Badge Officine Vérifiée
+          </li>
+        </ul>
+      </div>
+
+      <button class="w-full py-2.5 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl transition">
+        Souscrire Pharmacie PRO
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

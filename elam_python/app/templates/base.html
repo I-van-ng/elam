@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-200">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ELAM Santé | Système d'Information Santé Gabon{% endblock %}</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            medical: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#16a34a',
+              600: '#0b6e4f',
+              700: '#08533c',
+              900: '#04281c',
+            },
+            brand: {
+              blue: '#1e40af',
+              slate: '#0f172a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Phone Simulator Styles */
+    .phone-bezel {
+      max-width: 412px;
+      min-height: 840px;
+      margin: 24px auto;
+      border: 10px solid #0f172a;
+      border-radius: 48px;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+      position: relative;
+      background: #f8fafc;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      width: 120px;
+      height: 22px;
+      background: #0f172a;
+      border-radius: 0 0 16px 16px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .phone-notch-cam {
+      width: 8px;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 50%;
+      margin-left: 8px;
+    }
+    .phone-notch-speaker {
+      width: 36px;
+      height: 3px;
+      background: #334155;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col bg-slate-200 text-slate-900 antialiased selection:bg-emerald-600 selection:text-white">
+
+  <!-- Floating Device View Switcher Bar on Top of Screen -->
+  <div class="bg-slate-900 text-white px-4 py-2 flex items-center justify-between z-50 text-xs shadow-md">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="font-bold tracking-tight">ELAM Santé Gabon • Simulateur d'affichage</span>
+    </div>
+
+    <!-- Toggle Buttons (Smartphone View vs Full Web View) -->
+    <div class="flex items-center gap-1.5 bg-slate-800 p-1 rounded-xl border border-slate-700">
+      <button 
+        onclick="toggleDeviceView('mobile')" 
+        id="btn-view-mobile" 
+        class="px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        Vue Téléphone (Smartphone)
+      </button>
+
+      <button 
+        onclick="toggleDeviceView('desktop')" 
+        id="btn-view-desktop" 
+        class="px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 text-slate-300 hover:text-white"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        Vue Plein Écran
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Device Shell Container -->
+  <div id="deviceContainer" class="phone-bezel transition-all duration-300">
+    
+    <!-- Phone Top Speaker & Notch (Visible in Mobile View) -->
+    <div id="phoneNotch" class="phone-notch select-none">
+      <div class="phone-notch-speaker"></div>
+      <div class="phone-notch-cam"></div>
+    </div>
+
+    <!-- Phone Status Bar -->
+    <div id="phoneStatusBar" class="h-7 pt-1 px-6 flex items-center justify-between text-[11px] font-bold text-slate-900 bg-white/95 select-none z-40">
+      <span id="statusBarClock">09:41</span>
+      <div class="flex items-center gap-1.5 text-slate-700">
+        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.25c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l.64-.64C7.93 20.26 9.88 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+        <span class="text-[9px] font-black">5G</span>
+        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 4h-3V2h-4v2H7v18h10V4z"/></svg>
+      </div>
+    </div>
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+      <div class="px-4 h-14 flex items-center justify-between gap-2">
+        <!-- Brand Logo -->
+        <a href="/" class="flex items-center gap-2 shrink-0">
+          <div class="w-8 h-8 rounded-xl bg-emerald-700 flex items-center justify-center text-white font-bold shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 0 1 12 6a5 5 0 0 1 7.5 6.6Z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7.5 12h2.3l1.2-2.6 2 5.2 1.3-2.6h2.2"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-1">
+              <span class="font-extrabold text-base tracking-tight text-slate-900">ELAM</span>
+              <span class="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1 rounded uppercase">
+                Gabon
+              </span>
+            </div>
+            <p class="text-[9px] text-slate-500 font-medium -mt-0.5">Le réflexe santé</p>
+          </div>
+        </a>
+
+        <!-- Location Pill -->
+        <div class="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-full text-[11px] font-semibold text-slate-700">
+          <svg class="w-3 h-3 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          <span class="truncate max-w-[90px]">Akanda</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Scrollable Content Area -->
+    <main class="flex-1 overflow-y-auto px-4 py-4 pb-24 space-y-6">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar (Always Visible inside the phone) -->
+    <div class="sticky bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-slate-200 py-2 px-2 flex items-center justify-around shadow-lg">
+      <a href="/" class="flex flex-col items-center py-1 px-2 text-[10px] font-semibold {% if active_tab == 'home' %}text-emerald-700 font-bold{% else %}text-slate-500{% endif %}">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+        </svg>
+        Accueil
+      </a>
+      <a href="/pharmacies" class="flex flex-col items-center py-1 px-2 text-[10px] font-semibold {% if active_tab == 'pharmacies' %}text-emerald-700 font-bold{% else %}text-slate-500{% endif %}">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+        </svg>
+        Pharmacies
+      </a>
+      <a href="/doctors" class="flex flex-col items-center py-1 px-2 text-[10px] font-semibold {% if active_tab == 'doctors' %}text-emerald-700 font-bold{% else %}text-slate-500{% endif %}">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+        </svg>
+        Médecins
+      </a>
+      <a href="/clinics" class="flex flex-col items-center py-1 px-2 text-[10px] font-semibold {% if active_tab == 'clinics' %}text-emerald-700 font-bold{% else %}text-slate-500{% endif %}">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+        </svg>
+        Urgences
+      </a>
+      <a href="/my-appointments" class="flex flex-col items-center py-1 px-2 text-[10px] font-semibold {% if active_tab == 'appointments' %}text-emerald-700 font-bold{% else %}text-slate-500{% endif %}">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        Mes RDV
+      </a>
+      <a href="/directory" class="flex flex-col items-center py-1 px-2 text-[10px] font-semibold {% if active_tab == 'directory' %}text-emerald-700 font-bold{% else %}text-slate-500{% endif %}">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11H7a2 2 0 00-2 2v6h14v-6a2 2 0 00-2-2h-2m-6 0V7a3 3 0 116 0v4m-6 0h6"></path>
+        </svg>
+        Gérer
+      </a>
+    </div>
+
+    <!-- Phone Home Indicator Bar at the very bottom -->
+    <div id="phoneHomeBar" class="h-3 bg-white flex items-center justify-center pb-1 select-none">
+      <div class="w-28 h-1 bg-slate-300 rounded-full"></div>
+    </div>
+  </div>
+
+  <script>
+    // Live Clock in Phone Status Bar
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const el = document.getElementById('statusBarClock');
+      if (el) el.innerText = `${hours}:${minutes}`;
+    }
+    updateClock();
+    setInterval(updateClock, 30000);
+
+    // Toggle between Phone Simulator and Full Desktop View
+    function toggleDeviceView(mode) {
+      const container = document.getElementById('deviceContainer');
+      const notch = document.getElementById('phoneNotch');
+      const statusBar = document.getElementById('phoneStatusBar');
+      const homeBar = document.getElementById('phoneHomeBar');
+      const btnMobile = document.getElementById('btn-view-mobile');
+      const btnDesktop = document.getElementById('btn-view-desktop');
+
+      if (mode === 'desktop') {
+        container.className = 'w-full max-w-5xl mx-auto min-h-screen bg-slate-50 flex flex-col transition-all duration-300';
+        notch.classList.add('hidden');
+        statusBar.classList.add('hidden');
+        homeBar.classList.add('hidden');
+        btnDesktop.className = 'px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white';
+        btnMobile.className = 'px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 text-slate-300 hover:text-white';
+        localStorage.setItem('elam_view_mode', 'desktop');
+      } else {
+        container.className = 'phone-bezel transition-all duration-300';
+        notch.classList.remove('hidden');
+        statusBar.classList.remove('hidden');
+        homeBar.classList.remove('hidden');
+        btnMobile.className = 'px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white';
+        btnDesktop.className = 'px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 text-slate-300 hover:text-white';
+        localStorage.setItem('elam_view_mode', 'mobile');
+      }
+    }
+
+    // Restore saved view preference
+    const savedMode = localStorage.getItem('elam_view_mode');
+    if (savedMode === 'desktop') {
+      toggleDeviceView('desktop');
+    }
+  </script>
+</body>
+</html>

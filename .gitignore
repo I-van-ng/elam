@@ -14,8 +14,13 @@ Thumbs.db
 .idea/
 .vscode/
 
-elam_mobile_python/
-elam_python/
+# Python
+__pycache__/
+*.pyc
+.flet/
+
+# Session locale de l'application (contient le jeton JWT)
+.elam_session.json
 
 .vercel
 .env*

@@ -18,7 +18,10 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== 'false';
+// Le mode demonstration est DESACTIVE par defaut : il faut l'activer
+// explicitement avec VITE_DEMO_MODE=true. L'ancien test (`!== 'false'`)
+// l'activait des que la variable etait absente — donc sur Vercel.
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

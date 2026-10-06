@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Urgences 24/7 & Hôpitaux | ELAM Gabon{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-in fade-in duration-200">
+
+  <!-- Header -->
+  <div class="space-y-1">
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+      Établissements de Soins & Urgences 24/7
+    </h1>
+    <p class="text-xs sm:text-sm text-slate-600">
+      Centres hospitaliers universitaires, polycliniques et maternités équipés pour les urgences médicales au Gabon.
+    </p>
+  </div>
+
+  <details class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+    <summary class="cursor-pointer text-sm font-extrabold text-rose-700">Ajouter un hôpital ou une clinique</summary>
+    <form action="/clinics/add" method="POST" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4 text-xs">
+      <input name="name" required placeholder="Nom de l'établissement" class="px-3 py-2 rounded-xl border border-slate-200">
+      <select name="type" class="px-3 py-2 rounded-xl border border-slate-200"><option value="HOSPITAL">Hôpital</option><option value="CLINIC" selected>Clinique</option><option value="LAB">Laboratoire</option></select>
+      <input name="phone" required placeholder="Téléphone accueil" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="emergency_phone" value="1300" placeholder="Téléphone urgence" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="address" required placeholder="Adresse" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="district" placeholder="Quartier" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="city" value="Libreville" placeholder="Ville" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="latitude" value="0.391" placeholder="Latitude" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="longitude" value="9.449" placeholder="Longitude" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="services_list" value="Urgences, Médecine générale" placeholder="Services" class="px-3 py-2 rounded-xl border border-slate-200">
+      <label class="flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" name="has_emergency_247" checked> Urgences 24/7</label>
+      <label class="flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" name="accepts_cnamgs" checked> CNAMGS</label>
+      <button class="sm:col-span-2 lg:col-span-3 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-bold">Enregistrer l'établissement</button>
+    </form>
+  </details>
+
+  <!-- SAMU Urgent Banner -->
+  <div class="bg-slate-900 text-white p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+    <div class="space-y-1 text-center sm:text-left">
+      <span class="bg-rose-600 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded">Urgence Vitale</span>
+      <h2 class="text-xl font-black">SAMU National Gabon</h2>
+      <p class="text-xs text-slate-400">Numéro d'appel d'urgence gratuit et permanent 24h/24 & 7j/7.</p>
+    </div>
+    <a href="tel:1300" class="px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-sm rounded-xl transition shrink-0 flex items-center gap-2 shadow-sm">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+      </svg>
+      Composer le 1300
+    </a>
+  </div>
+
+  <!-- Clinics List with GPS Itinerary -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {% for c in clinics %}
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-slate-300 transition space-y-3 flex flex-col justify-between shadow-sm">
+      <div class="space-y-2.5">
+        <div class="flex items-start justify-between gap-2">
+          <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+          </div>
+          {% if c.has_emergency_247 %}
+          <span class="bg-rose-100 text-rose-900 text-[10px] font-bold px-2 py-0.5 rounded">Urgences 24/7</span>
+          {% endif %}
+        </div>
+
+        <div>
+          <h3 class="font-extrabold text-sm text-slate-900">{{ c.name }}</h3>
+          <p class="text-xs text-slate-500 mt-0.5">{{ c.address }}, {{ c.city }}</p>
+        </div>
+
+        <div class="flex items-center gap-1 text-xs text-rose-700 font-bold">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+          <span>Urgences à {{ c.travel_info }}</span>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Plateau technique & Services</p>
+          <p class="text-xs text-slate-700 leading-relaxed">{{ c.services_list }}</p>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+        <a 
+          href="{{ c.gps_url }}" 
+          target="_blank"
+          class="flex-1 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-center transition flex items-center justify-center gap-1"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+          Itinéraire GPS
+        </a>
+        <a href="tel:{{ c.phone.replace(' ', '') }}" class="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-xl font-bold transition">
+          Accueil : {{ c.phone }}
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

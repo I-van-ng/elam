@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion du Référentiel | ELAM Gabon{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="space-y-1">
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Gestion du référentiel</h1>
+    <p class="text-xs sm:text-sm text-slate-600">Ajoutez les médecins, pharmacies et établissements qui doivent apparaître dans ELAM.</p>
+  </div>
+
+  {% if success %}
+  <div class="rounded-2xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-xs font-bold text-emerald-800">
+    Élément ajouté au référentiel.
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-3 gap-3">
+    <div class="bg-white border border-slate-200 rounded-2xl p-4">
+      <p class="text-[10px] uppercase font-black text-slate-400">Médecins</p>
+      <p class="text-2xl font-black text-slate-900">{{ doctors|length }}</p>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-2xl p-4">
+      <p class="text-[10px] uppercase font-black text-slate-400">Pharmacies</p>
+      <p class="text-2xl font-black text-slate-900">{{ pharmacies|length }}</p>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-2xl p-4">
+      <p class="text-[10px] uppercase font-black text-slate-400">Urgences</p>
+      <p class="text-2xl font-black text-slate-900">{{ clinics|length }}</p>
+    </div>
+  </div>
+
+  <details open class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+    <summary class="cursor-pointer text-sm font-extrabold text-blue-700">Ajouter médecin</summary>
+    <form action="/directory/add/doctor" method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-xs">
+      <input name="first_name" required placeholder="Prénom du responsable *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="last_name" required placeholder="Nom du responsable *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="email" placeholder="E-mail" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="phone" required placeholder="Téléphone *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <select name="title" class="px-3 py-2 rounded-xl border border-slate-200"><option>Dr.</option><option>Pr.</option><option>M.</option><option>Mme</option></select>
+      <select name="specialty" class="px-3 py-2 rounded-xl border border-slate-200"><option>Médecine Générale</option><option>Cardiologie</option><option>Pédiatrie</option><option>Gynécologie</option><option>Ophtalmologie</option><option>Kinésithérapie</option><option>Dentiste</option></select>
+      <input name="sub_specialties" placeholder="Expertises" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="cnom_number" placeholder="CNOM / ordre professionnel" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="consultation_fee" value="15000" placeholder="Tarif de consultation (FCFA) *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="address" required placeholder="Adresse *" class="px-3 py-2 rounded-xl border border-slate-200 sm:col-span-2">
+      <input name="city" value="Libreville" placeholder="Ville *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="district" placeholder="Quartier" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="latitude" value="0.5182" placeholder="Latitude *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="longitude" value="9.4215" placeholder="Longitude *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <label class="flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" name="accepts_cnamgs" checked> Conventionné CNAMGS</label>
+      <label class="flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" name="accepts_teleconsult"> Téléconsultation</label>
+      <label class="flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" name="accepts_home_visit"> Visite à domicile</label>
+      <button class="sm:col-span-2 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold">Ajouter au référentiel</button>
+    </form>
+  </details>
+
+  <details class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+    <summary class="cursor-pointer text-sm font-extrabold text-emerald-700">Ajouter pharmacie</summary>
+    <form action="/directory/add/pharmacy" method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-xs">
+      <input name="name" required placeholder="Nom de la pharmacie *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="license_number" placeholder="Numéro d'agrément" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="email" placeholder="E-mail" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="phone" required placeholder="Téléphone *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="address" required placeholder="Adresse *" class="px-3 py-2 rounded-xl border border-slate-200 sm:col-span-2">
+      <input name="city" value="Libreville" placeholder="Ville *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="district" placeholder="Quartier" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="latitude" value="0.5182" placeholder="Latitude *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="longitude" value="9.4215" placeholder="Longitude *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="opening_hours" value="08h00 - 20h00" placeholder="Horaires" class="px-3 py-2 rounded-xl border border-slate-200 sm:col-span-2">
+      <label class="flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" name="accepts_cnamgs" checked> CNAMGS</label>
+      <label class="flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" name="is_on_duty"> Pharmacie de garde</label>
+      <button class="sm:col-span-2 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold">Ajouter au référentiel</button>
+    </form>
+  </details>
+
+  <details class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+    <summary class="cursor-pointer text-sm font-extrabold text-rose-700">Ajouter hôpital ou clinique</summary>
+    <form action="/directory/add/clinic" method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-xs">
+      <input name="name" required placeholder="Nom de l'établissement *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <select name="type" class="px-3 py-2 rounded-xl border border-slate-200"><option>HOSPITAL</option><option>CLINIC</option><option>LAB</option></select>
+      <input name="phone" required placeholder="Téléphone *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="emergency_phone" value="1300" placeholder="Téléphone urgence" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="address" required placeholder="Adresse *" class="px-3 py-2 rounded-xl border border-slate-200 sm:col-span-2">
+      <input name="city" value="Libreville" placeholder="Ville *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="district" placeholder="Quartier" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="latitude" value="0.391" placeholder="Latitude *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="longitude" value="9.449" placeholder="Longitude *" class="px-3 py-2 rounded-xl border border-slate-200">
+      <input name="services_list" value="Urgences, Médecine générale" placeholder="Services" class="px-3 py-2 rounded-xl border border-slate-200 sm:col-span-2">
+      <label class="flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" name="accepts_cnamgs" checked> CNAMGS</label>
+      <label class="flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" name="has_emergency_247" checked> Urgences 24/7</label>
+      <button class="sm:col-span-2 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold">Ajouter au référentiel</button>
+    </form>
+  </details>
+</div>
+{% endblock %}
