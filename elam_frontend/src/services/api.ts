@@ -259,19 +259,59 @@ class ApiService {
     return this.request<any[]>('/subscriptions/plans');
   }
 
+  // ---------------------------------------------------------------------
+  // Paiement Mobile Money (Airtel Money / Moov Money)
+  // ---------------------------------------------------------------------
+
+  /**
+   * Demarre un encaissement Mobile Money.
+   *
+   * ATTENTION : le montant et la prise en charge CNAMGS ne sont PAS envoyes.
+   * Le serveur les calcule a partir du rendez-vous, de la reservation ou de la
+   * formule. Le client ne peut donc pas choisir ce qu'il paie.
+   */
   async initiatePayment(data: {
-    amount: number;
-    phone: string;
-    operator: 'AIRTEL_MONEY' | 'MOOV_MONEY';
     relatedTo: 'APPOINTMENT' | 'RESERVATION' | 'SUBSCRIPTION';
     relatedId: string;
-    applyCnamgs: boolean;
+    phone: string;
+    operator: 'AIRTEL_MONEY' | 'MOOV_MONEY';
   }) {
-    return this.request<any>('/payments/initiate', {
+    return this.request<PaymentInitResult>('/payments/initiate', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
+
+  /** Interroge l'operateur : sert au suivi apres validation sur le telephone. */
+  async getPaymentStatus(transactionRef: string) {
+    return this.request<PaymentRecord>(`/payments/verify/${encodeURIComponent(transactionRef)}`);
+  }
+
+  /** Historique des paiements de l'utilisateur connecte. */
+  async getPaymentHistory() {
+    return this.request<PaymentRecord[]>('/payments/history');
+  }
+}
+
+/** Etat d'un paiement, tel que renvoye par le backend. */
+export interface PaymentRecord {
+  id: string;
+  transactionRef: string;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  amount: number;
+  cnamgsCovered: number;
+  patientAmount: number;
+  currency: string;
+  operator: 'AIRTEL_MONEY' | 'MOOV_MONEY' | 'SANDBOX';
+  phone: string;
+  provider: string;
+  providerRef: string | null;
+  failureReason: string | null;
+}
+
+export interface PaymentInitResult {
+  payment: PaymentRecord;
+  instructions?: string;
 }
 
 export const api = new ApiService();

@@ -1,11 +1,10 @@
-import uuid
+import threading
+import time
 import datetime
 import flet as ft
 from theme.colors import MedicalColors
 from utils.ui import open_modal, close_modal, show_toast
-from data.database import SessionLocal
-from data.models import Payment, Appointment, MedicationReservation
-from services.api_client import api_client
+from services.api_client import api_client, ElamApiError
 
 
 def detect_operator(phone: str):
@@ -43,7 +42,10 @@ class MobileMoneyPaymentModal:
         self.total_amount = total_amount
         self.is_cnamgs_eligible = is_cnamgs_eligible
         self.related_to = related_to
-        self.related_id = related_id or str(uuid.uuid4())
+        # On n'invente JAMAIS de reference : un paiement doit viser un service reel.
+        # L'ancien code fabriquait un UUID au hasard, et le paiement ne pouvait
+        # alors confirmer aucun rendez-vous.
+        self.related_id = related_id
         self.on_success = on_success
 
         self.apply_cnamgs = is_cnamgs_eligible
@@ -70,7 +72,7 @@ class MobileMoneyPaymentModal:
         phone_input = ft.TextField(
             label="Numéro Mobile Money (Gabon)",
             value=self.phone_value,
-            prefix_text="🇬🇦 ",
+            prefix=ft.Text("🇬🇦 "),
             keyboard_type=ft.KeyboardType.PHONE,
             dense=True,
         )
@@ -116,7 +118,7 @@ class MobileMoneyPaymentModal:
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Text("Couverture CNAMGS (80%) :", size=13, color=MedicalColors.PRIMARY),
+                        ft.Text("Couverture CNAMGS estimée :", size=13, color=MedicalColors.PRIMARY),
                         ft.Text(f"- {cnamgs_part:,} FCFA".replace(",", " "), size=13, weight=ft.FontWeight.BOLD, color=MedicalColors.PRIMARY),
                     ],
                 ) if self.apply_cnamgs else ft.Container(),
@@ -124,18 +126,12 @@ class MobileMoneyPaymentModal:
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Text("Net à payer par Mobile Money :", size=14, weight=ft.FontWeight.BOLD, color=MedicalColors.TEXT_PRIMARY),
+                        ft.Text("Estimation à débiter :", size=14, weight=ft.FontWeight.BOLD, color=MedicalColors.TEXT_PRIMARY),
                         ft.Text(f"{patient_part:,} FCFA".replace(",", " "), size=16, weight=ft.FontWeight.BOLD, color=MedicalColors.AIRTEL_RED if self.selected_operator == "AIRTEL_MONEY" else MedicalColors.MOOV_BLUE),
                     ],
                 ),
             ],
         )
-
-        def on_cnamgs_toggle(e):
-            self.apply_cnamgs = e.control.value
-            c_part, p_part = self.calculate_amounts()
-            self._update_amounts_ui(amount_display, c_part, p_part)
-            self.page.update()
 
         # Operator Selector Cards
         def select_op(op):
@@ -199,17 +195,39 @@ class MobileMoneyPaymentModal:
                             spacing=8,
                             controls=[
                                 ft.Icon(ft.Icons.MEDICAL_SERVICES, color=MedicalColors.PRIMARY, size=20),
-                                ft.Expanded(
+                                ft.Container(
+                                    expand=True,
                                     content=ft.Text(self.service_name, size=13, weight=ft.FontWeight.BOLD, color=MedicalColors.PRIMARY_DARK),
                                 ),
                             ],
                         ),
                     ),
-                    ft.Switch(
-                        label="Assuré CNAMGS (Prise en charge 80%)",
-                        value=self.apply_cnamgs,
-                        active_color=MedicalColors.PRIMARY,
-                        on_change=on_cnamgs_toggle,
+                    ft.Container(
+                        padding=ft.Padding.all(10),
+                        border_radius=8,
+                        bgcolor=MedicalColors.PRIMARY_LIGHT,
+                        content=ft.Row(
+                            spacing=8,
+                            controls=[
+                                ft.Icon(ft.Icons.SHIELD_ROUNDED, color=MedicalColors.PRIMARY, size=18),
+                                ft.Container(
+                                    expand=True,
+                                    content=ft.Column(
+                                        tight=True,
+                                        spacing=2,
+                                        controls=[
+                                            ft.Text("Prise en charge CNAMGS", size=12, weight=ft.FontWeight.BOLD, color=MedicalColors.PRIMARY_DARK),
+                                            ft.Text(
+                                                "Appliquée automatiquement par nos services si vous êtes bénéficiaire. "
+                                                "Le montant exact vous sera confirmé avant validation.",
+                                                size=10,
+                                                color=MedicalColors.TEXT_SECONDARY,
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            ],
+                        ),
                     ) if self.is_cnamgs_eligible else ft.Container(),
                     ft.Text("Choisir l'opérateur de paiement :", size=12, weight=ft.FontWeight.BOLD, color=MedicalColors.TEXT_SECONDARY),
                     ft.Row(spacing=8, controls=[airtel_card, moov_card]),
@@ -276,6 +294,11 @@ class MobileMoneyPaymentModal:
         ]
 
     def _render_step_2_ussd_prompt(self):
+        """Envoie la demande a l'operateur, puis suit la validation sur le telephone."""
+        if not self.related_id:
+            show_toast(self.page, "Cette opération n'a pas encore de référence à régler.", MedicalColors.EMERGENCY)
+            return
+
         detected = detect_operator(self.phone_value)
         if not detected:
             show_toast(
@@ -295,28 +318,45 @@ class MobileMoneyPaymentModal:
             return
 
         close_modal(self.page, self.dialog)
-        cnamgs_part, patient_part = self.calculate_amounts()
 
-        op_name = "Airtel Money Gabon" if self.selected_operator == "AIRTEL_MONEY" else "Moov Money Flooz"
+        # Le montant n'est PAS transmis : le serveur le calcule a partir du
+        # rendez-vous, de la reservation ou de la formule d'abonnement.
+        try:
+            res = api_client.initiate_payment(
+                related_to=self.related_to,
+                related_id=self.related_id,
+                phone=self.phone_value,
+                operator=self.selected_operator,
+            )
+        except (ElamApiError, ValueError) as ex:
+            show_toast(self.page, f"Paiement refusé : {ex}", MedicalColors.EMERGENCY)
+            return
+
+        payment = res.get("payment") or {}
+        self._render_waiting_dialog(payment, res.get("instructions") or "")
+
+    def _render_waiting_dialog(self, payment: dict, instructions: str):
+        """Attente de la validation chez l'operateur.
+
+        On ne demande JAMAIS le code PIN Mobile Money : le client le saisit chez
+        son operateur (invite USSD ou application). Demander un PIN dans une
+        application tierce est exactement la forme d'une attaque par harponnage,
+        et les operateurs l'interdisent.
+        """
         op_color = MedicalColors.AIRTEL_RED if self.selected_operator == "AIRTEL_MONEY" else MedicalColors.MOOV_BLUE
+        op_name = "Airtel Money" if self.selected_operator == "AIRTEL_MONEY" else "Moov Money"
         ussd_code = "*150#" if self.selected_operator == "AIRTEL_MONEY" else "*555#"
+        patient_part = int(payment.get("patientAmount") or 0)
+        cnamgs_part = int(payment.get("cnamgsCovered") or 0)
+        total_part = int(payment.get("amount") or 0)
+        txn_ref = payment.get("transactionRef", "")
 
-        pin_input = ft.TextField(
-            label="Code PIN Secret",
-            password=True,
-            can_reveal_password=True,
-            value="1234",
-            keyboard_type=ft.KeyboardType.NUMBER,
-            dense=True,
-            autofocus=True,
-        )
-
-        ussd_dialog = ft.AlertDialog(
+        waiting_dialog = ft.AlertDialog(
             title=ft.Row(
                 spacing=8,
                 controls=[
                     ft.Icon(ft.Icons.SIM_CARD_ALERT, color=op_color),
-                    ft.Text(f"Push USSD ({op_name})", size=16, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"Validation {op_name}", size=16, weight=ft.FontWeight.BOLD),
                 ],
             ),
             content=ft.Container(
@@ -325,6 +365,20 @@ class MobileMoneyPaymentModal:
                     tight=True,
                     spacing=12,
                     controls=[
+                        ft.Row(
+                            spacing=10,
+                            controls=[
+                                ft.ProgressRing(width=18, height=18, stroke_width=2, color=op_color),
+                                ft.Container(
+                                    expand=True,
+                                    content=ft.Text(
+                                        "En attente de validation sur votre téléphone…",
+                                        size=12,
+                                        color=MedicalColors.TEXT_SECONDARY,
+                                    ),
+                                ),
+                            ],
+                        ),
                         ft.Container(
                             padding=ft.Padding.all(12),
                             border_radius=8,
@@ -333,61 +387,117 @@ class MobileMoneyPaymentModal:
                                 spacing=6,
                                 controls=[
                                     ft.Text(f"SERVICE : {ussd_code} - PAIEMENT MARCHAND", size=11, color="#94A3B8", weight=ft.FontWeight.BOLD),
-                                    ft.Text(f"Marchand : ELAM SANTE GABON", size=12, color="white", weight=ft.FontWeight.BOLD),
+                                    ft.Text("Marchand : ELAM SANTE GABON", size=12, color="white", weight=ft.FontWeight.BOLD),
                                     ft.Text(f"Montant : {patient_part:,} FCFA".replace(",", " "), size=15, color="#4ADE80", weight=ft.FontWeight.BOLD),
                                     ft.Text(f"Destinataire : {self.service_name}", size=11, color="#E2E8F0"),
                                 ],
                             ),
                         ),
-                        ft.Text("Entrez votre code secret Mobile Money pour autoriser la transaction :", size=12, color=MedicalColors.TEXT_SECONDARY),
-                        pin_input,
+                        ft.Text(
+                            "Validez la transaction chez votre opérateur. Ne saisissez jamais votre code secret ici.",
+                            size=11,
+                            color=MedicalColors.TEXT_SECONDARY,
+                        ),
+                        ft.Container(
+                            padding=ft.Padding.all(10),
+                            border_radius=8,
+                            bgcolor=MedicalColors.BACKGROUND,
+                            content=ft.Column(
+                                spacing=4,
+                                controls=[
+                                    ft.Row(
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                        controls=[
+                                            ft.Text("Montant du service :", size=12, color=MedicalColors.TEXT_SECONDARY),
+                                            ft.Text(f"{total_part:,} FCFA".replace(",", " "), size=12),
+                                        ],
+                                    ),
+                                    ft.Row(
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                        controls=[
+                                            ft.Text("Part CNAMGS :", size=12, color=MedicalColors.PRIMARY),
+                                            ft.Text(f"- {cnamgs_part:,} FCFA".replace(",", " "), size=12, weight=ft.FontWeight.BOLD, color=MedicalColors.PRIMARY),
+                                        ],
+                                    ),
+                                    ft.Divider(height=1, color=MedicalColors.BORDER),
+                                    ft.Row(
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                        controls=[
+                                            ft.Text("Net à débiter :", size=13, weight=ft.FontWeight.BOLD),
+                                            ft.Text(f"{patient_part:,} FCFA".replace(",", " "), size=15, weight=ft.FontWeight.BOLD, color=op_color),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                        ),
+                        ft.Text(f"Réf. {txn_ref}", size=10, color=MedicalColors.TEXT_MUTED),
                     ],
                 ),
             ),
             actions=[
-                ft.TextButton("Refuser", on_click=lambda _: close_modal(self.page, ussd_dialog)),
-                ft.ElevatedButton(
-                    "Valider le débit",
-                    bgcolor=op_color,
-                    color="white",
-                    on_click=lambda _: self._process_payment(ussd_dialog, patient_part, cnamgs_part, pin_input.value),
+                ft.TextButton(
+                    "Vérifier maintenant",
+                    on_click=lambda _: self._check_payment_now(waiting_dialog, txn_ref),
                 ),
+                ft.TextButton("Fermer", on_click=lambda _: close_modal(self.page, waiting_dialog)),
             ],
         )
 
-        open_modal(self.page, ussd_dialog)
+        open_modal(self.page, waiting_dialog)
+        threading.Thread(target=self._poll_payment, args=(waiting_dialog, txn_ref), daemon=True).start()
 
-    def _process_payment(self, ussd_dialog, patient_part, cnamgs_part, pin_value):
-        if not pin_value or not pin_value.isdigit() or len(pin_value) != 4:
-            show_toast(self.page, "Le code PIN doit contenir 4 chiffres.", MedicalColors.EMERGENCY)
-            return
-
-        close_modal(self.page, ussd_dialog)
-
+    def _check_payment_now(self, waiting_dialog, txn_ref):
         try:
-            res = api_client.initiate_payment(
-                amount=self.total_amount,
-                phone=self.phone_value,
-                operator=self.selected_operator,
-                related_to=self.related_to,
-                related_id=self.related_id,
-                apply_cnamgs=self.apply_cnamgs,
-            )
-        except Exception as ex:
-            show_toast(self.page, f"Paiement refusé: {ex}", MedicalColors.EMERGENCY)
+            current = api_client.get_payment_status(txn_ref)
+        except (ElamApiError, ValueError) as ex:
+            show_toast(self.page, f"Vérification impossible : {ex}", MedicalColors.WARNING)
             return
+        self._apply_payment_state(waiting_dialog, current)
 
-        receipt_data = res.get("receipt", {})
-        txn_ref = receipt_data.get("transactionRef", f"AM-GA-{str(uuid.uuid4())[:8].upper()}")
+    def _poll_payment(self, waiting_dialog, txn_ref):
+        """Suit le paiement jusqu'a confirmation par l'operateur (2 minutes max)."""
+        deadline = time.time() + 120
+        while time.time() < deadline:
+            time.sleep(3)
+            try:
+                current = api_client.get_payment_status(txn_ref)
+            except Exception:
+                continue  # erreur reseau passagere : on retente au cycle suivant
+            if self._apply_payment_state(waiting_dialog, current):
+                return
+        show_toast(
+            self.page,
+            "Validation non reçue. Vérifiez sur votre téléphone, puis relancez la vérification.",
+            MedicalColors.WARNING,
+        )
 
-        # Show Digital Receipt Modal
-        self._render_step_3_receipt(txn_ref, patient_part, cnamgs_part)
+    def _apply_payment_state(self, waiting_dialog, current: dict) -> bool:
+        """Renvoie True si le paiement est termine (confirme ou echoue)."""
+        status = (current or {}).get("status")
 
-        if self.on_success:
-            self.on_success(res.get("payment") or txn_ref)
+        if status == "COMPLETED":
+            close_modal(self.page, waiting_dialog)
+            self.page.update()
+            self._render_step_3_receipt(current)
+            if self.on_success:
+                self.on_success(current)
+            return True
 
-    def _render_step_3_receipt(self, txn_ref, patient_part, cnamgs_part):
+        if status in ("FAILED", "CANCELLED"):
+            reason = (current or {}).get("failureReason") or "Transaction refusée ou annulée."
+            close_modal(self.page, waiting_dialog)
+            show_toast(self.page, f"Paiement non abouti : {reason}", MedicalColors.EMERGENCY)
+            return True
+
+        return False
+
+    def _render_step_3_receipt(self, payment: dict):
+        """Recu affiche UNIQUEMENT apres confirmation par l'operateur."""
         now_str = datetime.datetime.now().strftime("%d/%m/%Y à %H:%M")
+        txn_ref = payment.get("transactionRef", "")
+        patient_part = int(payment.get("patientAmount") or 0)
+        cnamgs_part = int(payment.get("cnamgsCovered") or 0)
+        self.total_amount = int(payment.get("amount") or self.total_amount)
         op_name = "Airtel Money" if self.selected_operator == "AIRTEL_MONEY" else "Moov Money Flooz"
         op_color = MedicalColors.AIRTEL_RED if self.selected_operator == "AIRTEL_MONEY" else MedicalColors.MOOV_BLUE
 
@@ -436,7 +546,8 @@ class MobileMoneyPaymentModal:
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
                             ft.Text("Service médical :", size=12, color=MedicalColors.TEXT_SECONDARY),
-                            ft.Expanded(
+                            ft.Container(
+                                expand=True,
                                 content=ft.Text(self.service_name, size=12, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.RIGHT),
                             ),
                         ],
@@ -455,7 +566,7 @@ class MobileMoneyPaymentModal:
                             ft.Text("Prise en charge CNAMGS :", size=12, color=MedicalColors.PRIMARY),
                             ft.Text(f"- {cnamgs_part:,} FCFA".replace(",", " "), size=12, weight=ft.FontWeight.BOLD, color=MedicalColors.PRIMARY),
                         ],
-                    ) if self.apply_cnamgs else ft.Container(),
+                    ) if cnamgs_part > 0 else ft.Container(),
                     ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[

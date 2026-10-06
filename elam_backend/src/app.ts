@@ -13,7 +13,16 @@ export const createApp = (): Express => {
   // Middlewares de sécurité
   app.use(helmet());
   app.use(cors({ origin: '*' }));
-  app.use(express.json({ limit: '10mb' }));
+  app.use(
+    express.json({
+      limit: '10mb',
+      // On conserve le corps brut : indispensable pour verifier la signature
+      // HMAC des webhooks de paiement (Airtel Money / Moov Money).
+      verify: (req, _res, buf) => {
+        (req as Request & { rawBody?: string }).rawBody = buf.toString('utf8');
+      },
+    })
+  );
   app.use(express.urlencoded({ extended: true }));
 
   // Limiteur de requêtes

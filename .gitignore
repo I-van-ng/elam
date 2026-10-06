@@ -16,3 +16,6 @@ Thumbs.db
 
 elam_mobile_python/
 elam_python/
+
+.vercel
+.env*

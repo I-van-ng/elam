@@ -1,5 +1,7 @@
 datasource db {
-  provider = "postgresql"
+  // Local dev uses SQLite (see .env: DATABASE_URL="file:./dev.db").
+  // For production, switch to "postgresql" AND provide a postgresql:// URL.
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -27,6 +29,7 @@ model User {
   clinicProfile   ClinicProfile?
   subscriptions   Subscription[]
   reviewsWritten  Review[]
+  payments        Payment[]
 }
 
 model PatientProfile {
@@ -248,16 +251,39 @@ model Review {
 }
 
 model Payment {
-  id              String   @id @default(uuid())
-  amount          Int
-  currency        String   @default("FCFA")
-  operator        String   // AIRTEL_MONEY, MOOV_MONEY
-  phone           String
-  transactionRef  String   @unique
-  status          String   @default("COMPLETED") // PENDING, COMPLETED, FAILED
-  relatedTo       String   // APPOINTMENT, RESERVATION, SUBSCRIPTION
-  relatedId       String
-  cnamgsCovered   Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id       String @id @default(uuid())
+  userId   String?
+  user     User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Montants, TOUJOURS calcules cote serveur (jamais fournis par le client)
+  amount        Int // montant total du service (brut, FCFA)
+  cnamgsCovered Int  @default(0) // part prise en charge par la CNAMGS
+  patientAmount Int  @default(0) // ce que le patient paie reellement
+
+  currency String @default("FCFA")
+
+  // Fournisseur de paiement : SANDBOX (test), AIRTEL_MONEY, MOOV_MONEY
+  provider String @default("SANDBOX")
+  operator String // AIRTEL_MONEY, MOOV_MONEY
+  phone    String
+
+  transactionRef String  @unique // reference ELAM transmise a l'operateur
+  providerRef    String? // identifiant de transaction chez l'operateur
+
+  // Cycle de vie reel : le paiement n'est confirme que par le webhook operateur
+  status String @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED
+
+  relatedTo String // APPOINTMENT, RESERVATION, SUBSCRIPTION
+  relatedId String
+
+  failureReason String?
+  rawCallback   String? // charge utile brute du webhook, pour audit
+  confirmedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([relatedTo, relatedId])
+  @@index([status])
 }

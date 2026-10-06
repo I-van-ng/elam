@@ -2,9 +2,20 @@ import datetime
 import flet as ft
 from theme.colors import MedicalColors, MedicalStyles
 from utils.ui import show_toast, open_modal, close_modal
-from data.database import SessionLocal
-from data.models import DoctorProfile, Appointment, User
+from data.models import DoctorProfile
+from services.api_client import api_client, ElamApiError
 from components.payment_modal import MobileMoneyPaymentModal
+
+
+def end_time_for(start: str, minutes: int = 30) -> str:
+    """Fin du creneau (+30 min par defaut), avec passage d'heure — comme le site."""
+    try:
+        hour, minute = (int(part) for part in start.split(":"))
+    except Exception:
+        return start
+    total = hour * 60 + minute + minutes
+    return "%02d:%02d" % ((total // 60) % 24, total % 60)
+
 
 
 class DoctorBookingModal:
@@ -142,60 +153,58 @@ class DoctorBookingModal:
         slots_flow = ft.Row(scroll=ft.ScrollMode.ADAPTIVE, spacing=6, controls=slot_chips)
 
         def confirm_booking(e):
-            db = SessionLocal()
-            try:
-                patient = db.query(User).filter(User.role == "PATIENT").first()
-                if not patient:
-                    show_toast(self.page, "Patient non identifié.", MedicalColors.EMERGENCY)
-                    return
-
-                today_str = datetime.date.today().strftime("%Y-%m-%d")
-                apt = Appointment(
-                    patient_id=patient.id,
-                    doctor_id=self.doctor.id,
-                    appointment_date=today_str,
-                    start_time=self.selected_slot,
-                    end_time=f"{self.selected_slot[:2]}:50",
-                    type=self.consult_type,
-                    status="REQUESTED",
-                    reason=reason_input.value or "Consultation générale",
-                    fee_fcfa=self.doctor.consultation_fee,
-                )
-                db.add(apt)
-                db.commit()
-                db.refresh(apt)
-                appointment_id = apt.id
-
-                close_modal(self.page, self.dialog)
+            # Ecriture via l'API : on obtient un identifiant reel du backend,
+            # indispensable pour que le paiement confirme le bon rendez-vous.
+            if not api_client.is_authenticated:
                 show_toast(
                     self.page,
-                    "Rendez-vous enregistré. Finalisez le paiement mobile money pour confirmer.",
-                    MedicalColors.PRIMARY,
+                    "Connectez-vous pour prendre un rendez-vous.",
+                    MedicalColors.EMERGENCY,
                 )
+                return
 
-                def after_payment(_payment_info=None):
-                    show_toast(
-                        self.page,
-                        f"✅ Paiement validé. Rendez-vous confirmé avec {doc_name} à {self.selected_slot} !",
-                        MedicalColors.SUCCESS,
-                    )
-                    if self.on_success:
-                        self.on_success()
+            try:
+                appointment = api_client.book_appointment(
+                    doctor_id=self.doctor.id,
+                    appointment_date=datetime.date.today().strftime("%Y-%m-%d"),
+                    start_time=self.selected_slot,
+                    end_time=end_time_for(self.selected_slot),
+                    appointment_type=self.consult_type,
+                    reason=reason_input.value or "Consultation générale",
+                )
+            except ElamApiError as exc:
+                show_toast(self.page, exc.message, MedicalColors.EMERGENCY)
+                return
 
-                MobileMoneyPaymentModal(
-                    page=self.page,
-                    title="Paiement Mobile Money",
-                    service_name=f"Rendez-vous {doc_name}",
-                    total_amount=self.doctor.consultation_fee,
-                    is_cnamgs_eligible=self.doctor.accepts_cnamgs,
-                    related_to="APPOINTMENT",
-                    related_id=appointment_id,
-                    on_success=after_payment,
-                ).show()
-            except Exception as ex:
-                show_toast(self.page, f"Erreur: {ex}", MedicalColors.EMERGENCY)
-            finally:
-                db.close()
+            appointment_id = appointment.get("id")
+            fee = appointment.get("feeFcfa") or self.doctor.consultation_fee
+
+            close_modal(self.page, self.dialog)
+            show_toast(
+                self.page,
+                "Rendez-vous enregistré. Finalisez le paiement mobile money pour confirmer.",
+                MedicalColors.PRIMARY,
+            )
+
+            def after_payment(_payment_info=None):
+                show_toast(
+                    self.page,
+                    f"✅ Paiement validé. Rendez-vous confirmé avec {doc_name} à {self.selected_slot} !",
+                    MedicalColors.SUCCESS,
+                )
+                if self.on_success:
+                    self.on_success()
+
+            MobileMoneyPaymentModal(
+                page=self.page,
+                title="Paiement Mobile Money",
+                service_name=f"Rendez-vous {doc_name}",
+                total_amount=fee,
+                is_cnamgs_eligible=self.doctor.accepts_cnamgs,
+                related_to="APPOINTMENT",
+                related_id=appointment_id,
+                on_success=after_payment,
+            ).show()
 
         body = ft.Container(
             padding=ft.Padding.all(16),
@@ -210,8 +219,8 @@ class DoctorBookingModal:
                     slots_flow,
                     reason_input,
                     ft.ElevatedButton(
-                        "Confirmer le Rendez-vous",
-                        icon=ft.Icons.CHECK_CIRCLE_ROUNDED,
+                        "Continuer vers paiement",
+                        icon=ft.Icons.PAYMENT_ROUNDED,
                         bgcolor=MedicalColors.PRIMARY,
                         color="#FFFFFF",
                         style=ft.ButtonStyle(
