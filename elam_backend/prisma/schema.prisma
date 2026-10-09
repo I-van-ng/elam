@@ -1,7 +1,7 @@
 datasource db {
   // Local dev uses SQLite (see .env: DATABASE_URL="file:./dev.db").
   // For production, switch to "postgresql" AND provide a postgresql:// URL.
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
