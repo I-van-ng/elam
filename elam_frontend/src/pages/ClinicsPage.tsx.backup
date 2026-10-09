@@ -10,6 +10,23 @@ type FacilitiesMode = 'emergency' | 'hospitals';
 const fallbackFacilities: ClinicProfile[] = [
   ...realClinics,
   {
+    id: 'clin-1',
+    userId: 'u-c-1',
+    name: 'Centre Hospitalier Universitaire de Libreville (CHUL)',
+    type: 'HOSPITAL',
+    address: "Boulevard de l'Indépendance",
+    city: 'Libreville',
+    district: 'Centre-ville',
+    latitude: 0.391,
+    longitude: 9.449,
+    phone: '+241 11 76 20 00',
+    emergencyPhone247: '+241 11 76 20 00',
+    hasEmergency247: true,
+    acceptsCnamgs: true,
+    services: ['Urgences 24/7', 'Réanimation', 'Cardiologie', 'Chirurgie', 'Maternité', 'Laboratoire', 'Scanner'],
+    distanceKm: 4.8,
+  },
+  {
     id: 'clin-2',
     userId: 'u-c-2',
     name: 'Polyclinique El Rapha',
