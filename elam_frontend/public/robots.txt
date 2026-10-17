@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /my-appointments
+Disallow: /doctor/dashboard
+Disallow: /pharmacy/dashboard
+
+Sitemap: https://elam-cpkl.vercel.app/sitemap.xml

@@ -25,6 +25,78 @@ import { EmergencyAIPage } from "./pages/EmergencyAIPage";
 import { UserRole } from "./types";
 import { useAuth } from "./context/AuthContext";
 
+const SEO_PAGES: Record<string, { title: string; description: string }> = {
+  "/": {
+    title: "ELAM Santé — Trouver des soins au Gabon",
+    description:
+      "Trouvez des pharmacies, médecins, cliniques et services d’urgence au Gabon avec ELAM Santé.",
+  },
+  "/clinics": {
+    title: "Cliniques et centres de santé au Gabon | ELAM Santé",
+    description:
+      "Recherchez des cliniques et centres de santé au Gabon avec ELAM Santé.",
+  },
+  "/hospitals": {
+    title: "Hôpitaux au Gabon | ELAM Santé",
+    description: "Trouvez les hôpitaux et services hospitaliers au Gabon.",
+  },
+  "/pharmacies": {
+    title: "Pharmacies au Gabon | ELAM Santé",
+    description: "Localisez des pharmacies et consultez leurs informations au Gabon.",
+  },
+  "/doctors": {
+    title: "Médecins au Gabon | ELAM Santé",
+    description: "Recherchez des médecins et professionnels de santé au Gabon.",
+  },
+  "/emergency-ai": {
+    title: "IA Secours et premiers gestes | ELAM Santé Gabon",
+    description:
+      "Consignes de premiers secours, numéros d’urgence au Gabon et assistant IA de secours ELAM.",
+  },
+  "/pricing": {
+    title: "Offres ELAM Santé",
+    description: "Découvrez les offres et services proposés par ELAM Santé au Gabon.",
+  },
+};
+
+function SEOHead() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const page = SEO_PAGES[pathname];
+    const title = page?.title ?? "ELAM Santé — Santé connectée au Gabon";
+    const description =
+      page?.description ?? "ELAM Santé, votre annuaire santé au Gabon.";
+    const canonicalUrl = `https://elam-cpkl.vercel.app${pathname}`;
+    const setMeta = (selector: string, attribute: string, value: string) => {
+      const element = document.querySelector<HTMLMetaElement>(selector);
+      element?.setAttribute(attribute, value);
+    };
+
+    document.title = title;
+    setMeta('meta[name="description"]', "content", description);
+    setMeta('meta[property="og:title"]', "content", title);
+    setMeta('meta[property="og:description"]', "content", description);
+    setMeta('meta[property="og:url"]', "content", canonicalUrl);
+
+    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = canonicalUrl;
+
+    setMeta(
+      'meta[name="robots"]',
+      "content",
+      page ? "index, follow, max-image-preview:large" : "noindex, follow",
+    );
+  }, [pathname]);
+
+  return null;
+}
+
 function ProtectedRoute({
   role,
   children,
@@ -103,6 +175,7 @@ export function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <SEOHead />
         <div
           className={`min-h-screen bg-slate-100/70 text-slate-900 transition-colors ${isPhoneFrame ? "py-6 sm:py-10 flex flex-col items-center justify-center" : ""}`}
         >
