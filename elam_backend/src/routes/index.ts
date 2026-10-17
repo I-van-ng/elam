@@ -7,6 +7,7 @@ import clinicRoutes from './clinic.routes.js';
 import searchRoutes from './search.routes.js';
 import subscriptionRoutes from './subscription.routes.js';
 import paymentRoutes from './payment.routes.js';
+import emergencyAiRoutes from './emergency-ai.routes.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/clinics', clinicRoutes);
 router.use('/search', searchRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/emergency-ai', emergencyAiRoutes);
 
 export default router;

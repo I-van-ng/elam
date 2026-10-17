@@ -4,9 +4,8 @@ import {
   Compass,
   Pill,
   Stethoscope,
-  Building2,
   Hospital,
-  Siren,
+  ShieldAlert,
   CalendarCheck,
   ClipboardPlus,
 } from 'lucide-react';
@@ -19,9 +18,14 @@ export const BottomNav: React.FC<{ isPhoneFrame?: boolean }> = ({ isPhoneFrame =
   const navItems = [
     { path: '/', label: 'Explorer', icon: Compass },
     { path: '/pharmacies', label: 'Pharmacies', icon: Pill },
+    {
+      path: '/emergency-ai',
+      label: 'IA Secours',
+      icon: ShieldAlert,
+      isEmergency: true,
+    },
     { path: '/doctors', label: 'Médecins', icon: Stethoscope },
-    { path: '/hospitals', label: 'Hôpitaux', icon: Hospital },
-    { path: '/clinics', label: 'Urgences', icon: Siren },
+    { path: '/clinics', label: 'Centres 24/7', icon: Hospital },
   ];
 
   if (role === 'ADMIN') {
@@ -40,12 +44,38 @@ export const BottomNav: React.FC<{ isPhoneFrame?: boolean }> = ({ isPhoneFrame =
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
+          const isEmergency = (item as any).isEmergency;
+
+          if (isEmergency) {
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`tap-active relative flex min-w-0 flex-1 flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all duration-200 ${
+                  isActive
+                    ? 'text-rose-700 font-extrabold bg-rose-50 shadow-sm'
+                    : 'text-rose-600 hover:text-rose-700 font-bold'
+                }`}
+              >
+                <div className="relative">
+                  <span className="animate-ping absolute -top-0.5 -right-0.5 inline-flex h-2 w-2 rounded-full bg-rose-500 opacity-75"></span>
+                  <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-115 text-rose-600 stroke-[2.5]' : 'stroke-[2.2]'}`} />
+                </div>
+                <span className={`text-[9px] sm:text-[10px] tracking-tight mt-0.5 ${isActive ? 'font-black text-rose-800' : 'font-extrabold text-rose-600'}`}>
+                  {item.label}
+                </span>
+                {isActive && (
+                  <span className="absolute bottom-1 w-1 h-1 bg-rose-600 rounded-full"></span>
+                )}
+              </Link>
+            );
+          }
 
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`tap-active relative flex min-w-0 flex-1 flex-col items-center justify-center py-2 px-1.5 rounded-2xl transition-all duration-200 ${
+              className={`tap-active relative flex min-w-0 flex-1 flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all duration-200 ${
                 isActive
                   ? 'text-emerald-700 font-bold bg-emerald-50/90 shadow-sm'
                   : 'text-slate-400 hover:text-slate-700'

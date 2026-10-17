@@ -76,5 +76,8 @@ export const ENV = {
   SANDBOX_CONFIRM_AFTER_MS: parseInt(process.env.SANDBOX_CONFIRM_AFTER_MS || '6000', 10),
   /** Autorise les endpoints de simulation (a desactiver en production). */
   PAYMENT_SANDBOX_ENABLED: (process.env.PAYMENT_SANDBOX_ENABLED || 'true') === 'true',
+
+  // --- IA Secours & Premiers Secours (Google Gemini) ---
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
 };
 

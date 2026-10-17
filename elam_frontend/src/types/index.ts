@@ -197,3 +197,36 @@ export interface MedicationReservation {
   };
   pharmacy?: PharmacyProfile;
 }
+
+export interface EmergencyContact {
+  label: string;
+  number: string;
+  role: string;
+}
+
+export interface EmergencyProtocol {
+  id: string;
+  title: string;
+  icon: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM';
+  summary: string;
+  symptoms: string[];
+  steps: string[];
+  doNot: string[];
+  emergencyNumbers: { label: string; number: string }[];
+}
+
+export interface EmergencyAiResponse {
+  reply: string;
+  isAiGenerated: boolean;
+  emergencyContacts: EmergencyContact[];
+  recommendedProtocol?: EmergencyProtocol;
+  vitalQuestions?: string[];
+  urgentActionNeeded: boolean;
+}
+
+export interface EmergencyProtocolsData {
+  contacts: EmergencyContact[];
+  protocols: EmergencyProtocol[];
+}
+

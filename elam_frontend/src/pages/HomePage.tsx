@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   Search,
   MapPin,
@@ -17,22 +17,35 @@ import {
   CheckCircle2,
   AlertCircle,
   Video,
-} from 'lucide-react';
-import { HealthMap } from '../components/HealthMap';
-import { MedicationAvailabilityModal } from '../components/MedicationAvailabilityModal';
-import { DoctorBookingModal } from '../components/DoctorBookingModal';
-import { ReservationModal } from '../components/ReservationModal';
-import { api } from '../services/api';
-import { useAuth } from '../context/AuthContext';
-import { DoctorProfile, PharmacyProfile, ClinicProfile, MedicationSearchResult, MedicationAvailabilityOffer } from '../types';
-import { realClinics, realDoctors, realPharmacies } from '../data/realDirectory';
+} from "lucide-react";
+import { HealthMap } from "../components/HealthMap";
+import { MedicationAvailabilityModal } from "../components/MedicationAvailabilityModal";
+import { DoctorBookingModal } from "../components/DoctorBookingModal";
+import { isDoctorProfileLinked } from "../utils/doctorBooking";
+import { ReservationModal } from "../components/ReservationModal";
+import { api } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import {
+  DoctorProfile,
+  PharmacyProfile,
+  ClinicProfile,
+  MedicationSearchResult,
+  MedicationAvailabilityOffer,
+} from "../types";
+import {
+  realClinics,
+  realDoctors,
+  realPharmacies,
+} from "../data/realDirectory";
 
 export const HomePage: React.FC = () => {
   const { user, userLocation } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showMap, setShowMap] = useState(false);
-  const [mapTypeFilter, setMapTypeFilter] = useState<'ALL' | 'PHARMACY' | 'DOCTOR' | 'CLINIC'>('ALL');
-  const [mapZoneFilter, setMapZoneFilter] = useState('Toutes zones');
+  const [mapTypeFilter, setMapTypeFilter] = useState<
+    "ALL" | "PHARMACY" | "DOCTOR" | "CLINIC"
+  >("ALL");
+  const [mapZoneFilter, setMapZoneFilter] = useState("Toutes zones");
 
   const [pharmacies, setPharmacies] = useState<PharmacyProfile[]>([]);
   const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
@@ -40,10 +53,13 @@ export const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // Modals state
-  const [selectedMedResult, setSelectedMedResult] = useState<MedicationSearchResult | null>(null);
+  const [selectedMedResult, setSelectedMedResult] =
+    useState<MedicationSearchResult | null>(null);
   const [isMedModalOpen, setIsMedModalOpen] = useState(false);
 
-  const [selectedDoctor, setSelectedDoctor] = useState<DoctorProfile | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<DoctorProfile | null>(
+    null,
+  );
   const [isDoctorModalOpen, setIsDoctorModalOpen] = useState(false);
 
   const [selectedOfferForReserve, setSelectedOfferForReserve] = useState<{
@@ -55,13 +71,17 @@ export const HomePage: React.FC = () => {
   const normalizeKey = (value: string) =>
     value
       .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]/g, '');
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
 
-  const mergePharmaciesWithLocalDirectory = (apiPharmacies: PharmacyProfile[]) => {
+  const mergePharmaciesWithLocalDirectory = (
+    apiPharmacies: PharmacyProfile[],
+  ) => {
     const merged = [...realPharmacies];
-    const knownNames = new Set(merged.map((pharmacy) => normalizeKey(pharmacy.name)));
+    const knownNames = new Set(
+      merged.map((pharmacy) => normalizeKey(pharmacy.name)),
+    );
 
     apiPharmacies.forEach((pharmacy) => {
       const normalizedName = normalizeKey(pharmacy.name);
@@ -75,11 +95,37 @@ export const HomePage: React.FC = () => {
   };
 
   const mergeDoctorsWithLocalDirectory = (apiDoctors: DoctorProfile[]) => {
-    const merged = [...realDoctors];
-    const knownNames = new Set(merged.map((doctor) => normalizeKey(`${doctor.user?.firstName || ''}${doctor.user?.lastName || ''}`)));
+    const merged = realDoctors.map((localDoctor) => {
+      const localName = normalizeKey(
+        `${localDoctor.user?.firstName || ""}${localDoctor.user?.lastName || ""}`,
+      );
+      const apiDoctor = apiDoctors.find(
+        (doctor) =>
+          normalizeKey(
+            `${doctor.user?.firstName || ""}${doctor.user?.lastName || ""}`,
+          ) === localName,
+      );
+
+      return apiDoctor
+        ? {
+            ...localDoctor,
+            ...apiDoctor,
+            user: apiDoctor.user ?? localDoctor.user,
+          }
+        : localDoctor;
+    });
+    const knownNames = new Set(
+      merged.map((doctor) =>
+        normalizeKey(
+          `${doctor.user?.firstName || ""}${doctor.user?.lastName || ""}`,
+        ),
+      ),
+    );
 
     apiDoctors.forEach((doctor) => {
-      const normalizedName = normalizeKey(`${doctor.user?.firstName || ''}${doctor.user?.lastName || ''}`);
+      const normalizedName = normalizeKey(
+        `${doctor.user?.firstName || ""}${doctor.user?.lastName || ""}`,
+      );
       if (!knownNames.has(normalizedName)) {
         merged.push(doctor);
         knownNames.add(normalizedName);
@@ -91,14 +137,19 @@ export const HomePage: React.FC = () => {
 
   const mergeClinicsWithLocalDirectory = (apiClinics: ClinicProfile[]) => {
     const merged = [...realClinics];
-    const knownNames = new Set(merged.map((clinic) => normalizeKey(clinic.name)));
+    const knownNames = new Set(
+      merged.map((clinic) => normalizeKey(clinic.name)),
+    );
 
     apiClinics.forEach((clinic) => {
       const normalizedName = normalizeKey(clinic.name);
       if (!knownNames.has(normalizedName)) {
         merged.push({
           ...clinic,
-          emergencyPhone247: clinic.emergencyPhone247 === '1300' ? clinic.phone : clinic.emergencyPhone247,
+          emergencyPhone247:
+            clinic.emergencyPhone247 === "1300"
+              ? clinic.phone
+              : clinic.emergencyPhone247,
         });
         knownNames.add(normalizedName);
       }
@@ -107,11 +158,22 @@ export const HomePage: React.FC = () => {
     return merged;
   };
 
-  const loadData = async (query = '') => {
+  const loadData = async (query = "") => {
     setLoading(true);
     try {
-      if (query && (query.toLowerCase().includes('amox') || query.toLowerCase().includes('doli') || query.toLowerCase().includes('coart') || query.toLowerCase().includes('vent') || query.toLowerCase().includes('parac'))) {
-        const medResults = await api.searchMedicationAvailability(query, userLocation.lat, userLocation.lng);
+      if (
+        query &&
+        (query.toLowerCase().includes("amox") ||
+          query.toLowerCase().includes("doli") ||
+          query.toLowerCase().includes("coart") ||
+          query.toLowerCase().includes("vent") ||
+          query.toLowerCase().includes("parac"))
+      ) {
+        const medResults = await api.searchMedicationAvailability(
+          query,
+          userLocation.lat,
+          userLocation.lng,
+        );
         if (medResults && medResults.length > 0) {
           setSelectedMedResult(medResults[0]);
           setIsMedModalOpen(true);
@@ -126,51 +188,22 @@ export const HomePage: React.FC = () => {
       });
 
       if (res && res.results) {
-        setPharmacies(mergePharmaciesWithLocalDirectory(res.results.pharmacies || []));
+        setPharmacies(
+          mergePharmaciesWithLocalDirectory(res.results.pharmacies || []),
+        );
         setDoctors(mergeDoctorsWithLocalDirectory(res.results.doctors || []));
-        setClinics(mergeClinicsWithLocalDirectory(res.results.emergencyClinics || []));
+        setClinics(
+          mergeClinicsWithLocalDirectory(res.results.emergencyClinics || []),
+        );
       }
     } catch (err) {
-      console.warn('Fallback local data:', err);
+      console.warn("Fallback local data:", err);
       // Fallback
       setPharmacies(realPharmacies);
 
       setDoctors(realDoctors);
 
-      setClinics([
-        ...realClinics,
-        {
-          id: 'clin-1',
-          userId: 'u-c-1',
-          name: 'Centre Hospitalier Universitaire de Libreville (CHUL)',
-          type: 'HOSPITAL',
-          address: "Boulevard de l'Indépendance",
-          city: 'Libreville',
-          latitude: 0.391,
-          longitude: 9.449,
-          phone: '+241 11 76 20 00',
-          emergencyPhone247: '+241 11 76 20 00',
-          hasEmergency247: true,
-          acceptsCnamgs: true,
-          distanceKm: 4.8,
-        },
-        {
-          id: 'clin-2',
-          userId: 'u-c-2',
-          name: 'Polyclinique El Rapha',
-          type: 'CLINIC',
-          address: 'Carrefour Angondjé, Voie Express',
-          city: 'Libreville',
-          district: 'Akanda',
-          latitude: 0.5289,
-          longitude: 9.4345,
-          phone: '+241 11 73 73 73',
-          emergencyPhone247: '+241 07 20 20 20',
-          hasEmergency247: true,
-          acceptsCnamgs: true,
-          distanceKm: 1.4,
-        },
-      ]);
+      setClinics(mergeClinicsWithLocalDirectory([]));
     } finally {
       setLoading(false);
     }
@@ -191,6 +224,128 @@ export const HomePage: React.FC = () => {
   };
 
   const namedDoctors = doctors.filter((doc) => doc.user);
+  const normalizeSearchText = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  const matchesSearch = (query: string, fields: (string | undefined)[]) => {
+    const terms = normalizeSearchText(query).split(/\s+/).filter(Boolean);
+    const content = normalizeSearchText(fields.filter(Boolean).join(" "));
+    return terms.length > 0 && terms.every((term) => content.includes(term));
+  };
+  const searchSections = [
+    {
+      title: "Pharmacies et médicaments",
+      description: "Pharmacies, stocks et pharmacies de garde",
+      keywords: "pharmacie médicament médicaments stock garde officine",
+      to: "/pharmacies",
+    },
+    {
+      title: "Médecins et rendez-vous",
+      description: "Trouver un médecin ou une spécialité",
+      keywords: "médecin docteur consultation rendez-vous spécialiste",
+      to: "/doctors",
+    },
+    {
+      title: "Urgences et assistance",
+      description: "Services d’urgence et contacts utiles",
+      keywords: "urgence urgences samu secours assistance ambulance",
+      to: "/clinics",
+    },
+    {
+      title: "Hôpitaux et cliniques",
+      description: "Établissements de santé au Gabon",
+      keywords: "hôpital hôpitaux clinique polyclinique maternité",
+      to: "/hospitals",
+    },
+    {
+      title: "Tarifs et offres",
+      description: "Consulter les formules et tarifs ELAM",
+      keywords: "tarif tarifs prix offre offres abonnement paiement",
+      to: "/pricing",
+    },
+  ];
+  const query = searchQuery.trim();
+  const searchResults =
+    query.length < 2
+      ? []
+      : [
+          ...searchSections
+            .filter((section) =>
+              matchesSearch(query, [section.title, section.keywords]),
+            )
+            .map((section) => ({
+              key: section.to,
+              title: section.title,
+              description: section.description,
+              type: "Rubrique",
+              to: section.to,
+            })),
+          ...namedDoctors
+            .filter((doc) =>
+              matchesSearch(query, [
+                doc.title,
+                doc.user?.firstName,
+                doc.user?.lastName,
+                doc.specialty,
+                doc.subSpecialties,
+                doc.bio,
+                doc.address,
+                doc.district,
+                doc.city,
+              ]),
+            )
+            .map((doc) => ({
+              key: doc.id,
+              title: `${doc.title || "Dr."} ${doc.user?.firstName} ${doc.user?.lastName}`,
+              description: `${doc.specialty} · ${doc.district || doc.city}`,
+              type: "Médecin",
+              to: "/doctors",
+            })),
+          ...pharmacies
+            .filter((pharmacy) =>
+              matchesSearch(query, [
+                pharmacy.name,
+                pharmacy.address,
+                pharmacy.city,
+                pharmacy.district,
+                pharmacy.phone,
+                pharmacy.openingHours,
+              ]),
+            )
+            .map((pharmacy) => ({
+              key: pharmacy.id,
+              title: pharmacy.name,
+              description: `${pharmacy.district || pharmacy.address} · ${pharmacy.phone}`,
+              type: "Pharmacie",
+              to: "/pharmacies",
+            })),
+          ...clinics
+            .filter((clinic) =>
+              matchesSearch(query, [
+                clinic.name,
+                clinic.type,
+                clinic.address,
+                clinic.city,
+                clinic.district,
+                clinic.phone,
+                clinic.email,
+                ...(Array.isArray(clinic.services)
+                  ? clinic.services
+                  : [clinic.services]),
+              ]),
+            )
+            .map((clinic) => ({
+              key: clinic.id,
+              title: clinic.name,
+              description: `${clinic.address} · ${clinic.phone}`,
+              type: "Urgence / établissement",
+              to: "/clinics",
+            })),
+        ].slice(0, 8);
 
   // Map markers
   const mapMarkers = [
@@ -200,23 +355,35 @@ export const HomePage: React.FC = () => {
       lng: p.longitude,
       title: p.name,
       subtitle: `${p.district || p.address} (${p.distanceKm || 0} km)`,
-      type: 'PHARMACY' as const,
+      type: "PHARMACY" as const,
       isOnDuty: p.isOnDuty,
       phone: p.phone,
-      badge: p.acceptsCnamgs ? 'CNAMGS ✓' : undefined,
-      zone: p.city === 'Owendo' ? 'Owendo' : p.city === 'Akanda' ? 'Akanda' : p.district || p.city,
+      badge: p.acceptsCnamgs ? "CNAMGS ✓" : undefined,
+      zone:
+        p.city === "Owendo"
+          ? "Owendo"
+          : p.city === "Akanda"
+            ? "Akanda"
+            : p.district || p.city,
       positionConfirmed: p.positionConfirmed,
     })),
     ...namedDoctors.map((d) => ({
       id: d.id,
       lat: d.latitude,
       lng: d.longitude,
-      title: d.user ? `${d.title || 'Dr.'} ${d.user.firstName} ${d.user.lastName}` : `${d.title || 'Dr.'} Spécialiste`,
+      title: d.user
+        ? `${d.title || "Dr."} ${d.user.firstName} ${d.user.lastName}`
+        : `${d.title || "Dr."} Spécialiste`,
       subtitle: `${d.specialty} - ${d.consultationFee.toLocaleString()} FCFA`,
-      type: 'DOCTOR' as const,
+      type: "DOCTOR" as const,
       phone: d.user?.phone,
-      badge: d.acceptsCnamgs ? 'CNAMGS ✓' : 'Sans assurance',
-      zone: d.city === 'Owendo' ? 'Owendo' : d.city === 'Akanda' ? 'Akanda' : d.district || d.city,
+      badge: d.acceptsCnamgs ? "CNAMGS ✓" : "Sans assurance",
+      zone:
+        d.city === "Owendo"
+          ? "Owendo"
+          : d.city === "Akanda"
+            ? "Akanda"
+            : d.district || d.city,
       positionConfirmed: d.positionConfirmed,
     })),
     ...clinics.map((c) => ({
@@ -225,25 +392,34 @@ export const HomePage: React.FC = () => {
       lng: c.longitude,
       title: c.name,
       subtitle: `Urgences 24/7 - ${c.city}`,
-      type: 'CLINIC' as const,
+      type: "CLINIC" as const,
       phone: c.phone,
-      badge: 'Urgences 24/7',
-      zone: c.city === 'Owendo' ? 'Owendo' : c.city === 'Akanda' ? 'Akanda' : c.district || c.city,
+      badge: "Urgences 24/7",
+      zone:
+        c.city === "Owendo"
+          ? "Owendo"
+          : c.city === "Akanda"
+            ? "Akanda"
+            : c.district || c.city,
       positionConfirmed: c.positionConfirmed,
     })),
   ];
 
   const mapZones = useMemo(() => {
-    const zones = Array.from(new Set(mapMarkers.map((marker) => marker.zone).filter(Boolean))) as string[];
-    const priority = ['Akanda', 'Libreville', 'Centre-ville', 'Owendo'];
+    const zones = Array.from(
+      new Set(mapMarkers.map((marker) => marker.zone).filter(Boolean)),
+    ) as string[];
+    const priority = ["Akanda", "Libreville", "Centre-ville", "Owendo"];
 
     return [
-      'Toutes zones',
+      "Toutes zones",
       ...zones.sort((a, b) => {
         const indexA = priority.indexOf(a);
         const indexB = priority.indexOf(b);
         if (indexA !== -1 || indexB !== -1) {
-          return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+          return (
+            (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB)
+          );
         }
         return a.localeCompare(b);
       }),
@@ -252,17 +428,19 @@ export const HomePage: React.FC = () => {
 
   const filteredMapMarkers = useMemo(() => {
     return mapMarkers.filter((marker) => {
-      const matchesType = mapTypeFilter === 'ALL' || marker.type === mapTypeFilter;
-      const matchesZone = mapZoneFilter === 'Toutes zones' || marker.zone === mapZoneFilter;
+      const matchesType =
+        mapTypeFilter === "ALL" || marker.type === mapTypeFilter;
+      const matchesZone =
+        mapZoneFilter === "Toutes zones" || marker.zone === mapZoneFilter;
       return matchesType && matchesZone;
     });
   }, [mapMarkers, mapTypeFilter, mapZoneFilter]);
 
   const mapFilterButtons = [
-    { label: 'Tout', value: 'ALL' as const },
-    { label: 'Pharmacies', value: 'PHARMACY' as const },
-    { label: 'Médecins', value: 'DOCTOR' as const },
-    { label: 'Urgences', value: 'CLINIC' as const },
+    { label: "Tout", value: "ALL" as const },
+    { label: "Pharmacies", value: "PHARMACY" as const },
+    { label: "Médecins", value: "DOCTOR" as const },
+    { label: "Urgences", value: "CLINIC" as const },
   ];
 
   return (
@@ -271,13 +449,19 @@ export const HomePage: React.FC = () => {
       <div className="flex items-center justify-between pt-2">
         <div>
           <p className="text-xs font-semibold text-slate-400">
-            {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            {new Date().toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
           </p>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-0.5">
-            {user ? `Bonjour ${user.firstName}` : 'Bienvenue sur ELAM'} 👋
+            {user ? `Bonjour ${user.firstName}` : "Bienvenue sur ELAM"} 👋
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            {user ? "Comment vous sentez-vous aujourd'hui ?" : 'Trouvez rapidement un médecin, une pharmacie ou une urgence.'}
+            {user
+              ? "Comment vous sentez-vous aujourd'hui ?"
+              : "Trouvez rapidement un médecin, une pharmacie ou une urgence."}
           </p>
         </div>
 
@@ -308,36 +492,103 @@ export const HomePage: React.FC = () => {
             Chercher
           </button>
         </div>
+        {query.length >= 2 && (
+          <div className="absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+            {searchResults.length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {searchResults.map((result) => (
+                  <Link
+                    key={result.key}
+                    to={result.to}
+                    className="flex items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-emerald-50"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-bold text-slate-900">
+                        {result.title}
+                      </span>
+                      <span className="block truncate text-xs text-slate-500">
+                        {result.description}
+                      </span>
+                    </span>
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
+                      {result.type}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="px-4 py-3 text-sm text-slate-500">
+                Aucun résultat dans les rubriques et annuaires chargés.
+              </p>
+            )}
+          </div>
+        )}
       </form>
+
+      {/* 2.5 Emergency & First-Aid AI Banner */}
+      <Link
+        to="/emergency-ai"
+        className="tap-active block relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 p-4 sm:p-5 text-white shadow-xl shadow-rose-600/20 border border-red-500/30 group hover:scale-[1.01] transition-all"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/25 backdrop-blur text-[10px] font-black uppercase tracking-wider text-rose-100">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
+              <span>Nouveau · IA d'Urgence Vitale</span>
+            </div>
+            <h3 className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
+              Que faire avant l'arrivée des secours ?
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </h3>
+            <p className="text-xs text-rose-100 max-w-md">
+              Guidage immédiat pas à pas (arrêt cardiaque, étouffement, hémorragie, PLS) + appel direct SAMU 1300 & Pompiers 18.
+            </p>
+          </div>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-2xl sm:text-3xl shrink-0 group-hover:scale-110 transition-transform">
+            🚨
+          </div>
+        </div>
+      </Link>
 
       {/* 3. Quick Action Hub (4 Clean Touch Tiles) */}
       <div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {/* Tile 1: Chercher Médicament */}
           <button
-            onClick={() => handleQuickPill('Amoxicilline')}
+            onClick={() => handleQuickPill("Amoxicilline")}
             className="tap-active bg-white p-4 rounded-3xl border border-slate-200/80 hover:border-emerald-300 hover:shadow-md transition text-left flex flex-col justify-between h-28 group"
           >
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
               💊
             </div>
             <div>
-              <p className="text-xs font-extrabold text-slate-900 leading-tight">Médicament</p>
-              <p className="text-[10px] text-slate-400 font-medium">Stocks en direct</p>
+              <p className="text-xs font-extrabold text-slate-900 leading-tight">
+                Médicament
+              </p>
+              <p className="text-[10px] text-slate-400 font-medium">
+                Stocks en direct
+              </p>
             </div>
           </button>
 
           {/* Tile 2: Pharmacie de Garde */}
           <button
-            onClick={() => handleQuickPill('Pharmacie de garde')}
+            onClick={() => handleQuickPill("Pharmacie de garde")}
             className="tap-active bg-white p-4 rounded-3xl border border-slate-200/80 hover:border-amber-300 hover:shadow-md transition text-left flex flex-col justify-between h-28 group"
           >
             <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
               🌙
             </div>
             <div>
-              <p className="text-xs font-extrabold text-slate-900 leading-tight">Pharmacie Garde</p>
-              <p className="text-[10px] text-amber-600 font-bold">Ouvertes 24h</p>
+              <p className="text-xs font-extrabold text-slate-900 leading-tight">
+                Pharmacie Garde
+              </p>
+              <p className="text-[10px] text-amber-600 font-bold">
+                Ouvertes 24h
+              </p>
             </div>
           </button>
 
@@ -350,8 +601,12 @@ export const HomePage: React.FC = () => {
               🩺
             </div>
             <div>
-              <p className="text-xs font-extrabold text-slate-900 leading-tight">Médecins</p>
-              <p className="text-[10px] text-slate-400 font-medium">Prise de RDV</p>
+              <p className="text-xs font-extrabold text-slate-900 leading-tight">
+                Médecins
+              </p>
+              <p className="text-[10px] text-slate-400 font-medium">
+                Prise de RDV
+              </p>
             </div>
           </Link>
 
@@ -364,8 +619,12 @@ export const HomePage: React.FC = () => {
               🚨
             </div>
             <div>
-              <p className="text-xs font-black text-white leading-tight">Urgences 1488</p>
-              <p className="text-[10px] text-rose-100 font-semibold">SAMU Social</p>
+              <p className="text-xs font-black text-white leading-tight">
+                Urgences 1488
+              </p>
+              <p className="text-[10px] text-rose-100 font-semibold">
+                SAMU Social
+              </p>
             </div>
           </a>
         </div>
@@ -389,7 +648,7 @@ export const HomePage: React.FC = () => {
             className="tap-active self-start sm:self-auto flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 px-3 py-1.5 rounded-full transition"
           >
             <MapIcon className="w-3.5 h-3.5" />
-            <span>{showMap ? 'Masquer la carte' : 'Afficher la carte'}</span>
+            <span>{showMap ? "Masquer la carte" : "Afficher la carte"}</span>
           </button>
         </div>
 
@@ -403,8 +662,8 @@ export const HomePage: React.FC = () => {
                     onClick={() => setMapTypeFilter(button.value)}
                     className={`tap-active rounded-xl px-2 py-1.5 text-[10px] font-extrabold transition ${
                       mapTypeFilter === button.value
-                        ? 'bg-white text-emerald-700 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? "bg-white text-emerald-700 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
                     {button.label}
@@ -418,7 +677,9 @@ export const HomePage: React.FC = () => {
                 className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500"
               >
                 {mapZones.map((zone) => (
-                  <option key={zone} value={zone}>{zone}</option>
+                  <option key={zone} value={zone}>
+                    {zone}
+                  </option>
                 ))}
               </select>
             </div>
@@ -441,7 +702,10 @@ export const HomePage: React.FC = () => {
           <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
             <span>🌙 Pharmacies de garde et Ouvertes</span>
           </h3>
-          <Link to="/pharmacies" className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5">
+          <Link
+            to="/pharmacies"
+            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5"
+          >
             Voir tout <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -469,12 +733,16 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <h4 className="font-extrabold text-slate-900 text-sm">{pharm.name}</h4>
+                  <h4 className="font-extrabold text-slate-900 text-sm">
+                    {pharm.name}
+                  </h4>
                   <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                     <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     {pharm.district || pharm.address}
                     {pharm.distanceKm !== undefined && (
-                      <strong className="text-emerald-700 ml-1">({pharm.distanceKm} km)</strong>
+                      <strong className="text-emerald-700 ml-1">
+                        ({pharm.distanceKm} km)
+                      </strong>
                     )}
                   </p>
                 </div>
@@ -492,15 +760,15 @@ export const HomePage: React.FC = () => {
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                 <a
-                  href={`tel:${pharm.phone.split('/')[0].replace(/\s+/g, '')}`}
+                  href={`tel:${pharm.phone.split("/")[0].replace(/\s+/g, "")}`}
                   className="tap-active px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition"
                 >
                   Appeler
                 </a>
                 <button
                   onClick={() => {
-                    setSearchQuery('Amoxicilline');
-                    loadData('Amoxicilline');
+                    setSearchQuery("Amoxicilline");
+                    loadData("Amoxicilline");
                   }}
                   className="tap-active px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm"
                 >
@@ -518,14 +786,19 @@ export const HomePage: React.FC = () => {
           <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
             <span>🩺 Médecins Disponibles</span>
           </h3>
-          <Link to="/doctors" className="text-xs font-bold text-blue-700 hover:text-blue-800 flex items-center gap-0.5">
+          <Link
+            to="/doctors"
+            className="text-xs font-bold text-blue-700 hover:text-blue-800 flex items-center gap-0.5"
+          >
             Voir tout <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {namedDoctors.slice(0, 2).map((doc) => {
-            const docName = doc.user ? `${doc.title || 'Dr.'} ${doc.user.firstName} ${doc.user.lastName}` : `${doc.title || 'Dr.'} Spécialiste`;
+            const docName = doc.user
+              ? `${doc.title || "Dr."} ${doc.user.firstName} ${doc.user.lastName}`
+              : `${doc.title || "Dr."} Spécialiste`;
             return (
               <div
                 key={doc.id}
@@ -534,31 +807,45 @@ export const HomePage: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-500 to-teal-400 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-blue-500/20">
-                      {doc.user ? doc.user.firstName[0] + doc.user.lastName[0] : 'DR'}
+                      {doc.user
+                        ? doc.user.firstName[0] + doc.user.lastName[0]
+                        : "DR"}
                     </div>
                     <div className="text-right">
                       <span className="text-xs font-black text-slate-900 block">
                         {doc.consultationFee.toLocaleString()} FCFA
                       </span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                        doc.acceptsCnamgs ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'
-                      }`}>
-                        {doc.acceptsCnamgs ? 'CNAMGS ✓' : 'Sans assurance'}
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                          doc.acceptsCnamgs
+                            ? "text-emerald-700 bg-emerald-50"
+                            : "text-amber-700 bg-amber-50"
+                        }`}
+                      >
+                        {doc.acceptsCnamgs ? "CNAMGS ✓" : "Sans assurance"}
                       </span>
                     </div>
                   </div>
 
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <h4 className="font-extrabold text-slate-900 text-sm">{docName}</h4>
-                      <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1 rounded">✓</span>
+                      <h4 className="font-extrabold text-slate-900 text-sm">
+                        {docName}
+                      </h4>
+                      <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1 rounded">
+                        ✓
+                      </span>
                     </div>
-                    <p className="text-xs font-bold text-blue-700">{doc.specialty}</p>
+                    <p className="text-xs font-bold text-blue-700">
+                      {doc.specialty}
+                    </p>
                     <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                       <MapPin className="w-3 h-3 text-slate-400" />
                       {doc.district || doc.address}
                       {doc.distanceKm !== undefined && (
-                        <strong className="text-blue-700 ml-1">({doc.distanceKm} km)</strong>
+                        <strong className="text-blue-700 ml-1">
+                          ({doc.distanceKm} km)
+                        </strong>
                       )}
                     </p>
                     {doc.bio && (
@@ -574,24 +861,42 @@ export const HomePage: React.FC = () => {
                     <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
                       ★ {doc.rating}
                     </span>
-                    <button
-                      onClick={() => {
-                        setSelectedDoctor(doc);
-                        setIsDoctorModalOpen(true);
-                      }}
-                      className="tap-active shrink-0 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1"
-                    >
-                      <CalendarCheck className="w-3.5 h-3.5" /> Prendre RDV
-                    </button>
+                    {isDoctorProfileLinked(doc.id) ? (
+                      <button
+                        onClick={() => {
+                          setSelectedDoctor(doc);
+                          setIsDoctorModalOpen(true);
+                        }}
+                        className="tap-active shrink-0 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1"
+                      >
+                        <CalendarCheck className="w-3.5 h-3.5" /> Prendre RDV
+                      </button>
+                    ) : doc.user?.phone ? (
+                      <a
+                        href={`tel:${doc.user.phone.split("/")[0].replace(/[^\d+]/g, "")}`}
+                        className="tap-active shrink-0 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1"
+                      >
+                        <Phone className="w-3.5 h-3.5" /> Appeler
+                      </a>
+                    ) : (
+                      <button
+                        disabled
+                        className="shrink-0 rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-500"
+                      >
+                        Réservation indisponible
+                      </button>
+                    )}
                   </div>
 
                   {doc.user?.phone && (
                     <a
-                      href={`tel:${doc.user.phone.split('/')[0].replace(/[^\d+]/g, '')}`}
+                      href={`tel:${doc.user.phone.split("/")[0].replace(/[^\d+]/g, "")}`}
                       className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-semibold leading-relaxed text-slate-600 flex items-start gap-2 text-left hover:bg-slate-50 transition"
                     >
                       <Phone className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
-                      <span className="min-w-0 break-words">{doc.user.phone}</span>
+                      <span className="min-w-0 break-words">
+                        {doc.user.phone}
+                      </span>
                     </a>
                   )}
                 </div>
@@ -611,9 +916,15 @@ export const HomePage: React.FC = () => {
             SAMU Social Gabonais - 1488
           </h4>
           <p className="text-xs text-rose-900/90 leading-relaxed">
-            Consultations gratuites 7j/7 et 24h/24 : cardiologie, dentiste, ophtalmologie, gynécologie, ORL, kinésithérapie, psychologie, généraliste et sage-femme à domicile. Examens gratuits : radiographie, échographie pelvienne et ECG.
+            Consultations gratuites 7j/7 et 24h/24 : cardiologie, dentiste,
+            ophtalmologie, gynécologie, ORL, kinésithérapie, psychologie,
+            généraliste et sage-femme à domicile. Examens gratuits :
+            radiographie, échographie pelvienne et ECG.
           </p>
-          <a href="tel:1488" className="inline-flex items-center gap-1 text-xs font-black text-rose-700 pt-1">
+          <a
+            href="tel:1488"
+            className="inline-flex items-center gap-1 text-xs font-black text-rose-700 pt-1"
+          >
             Appeler le 1488 <ChevronRight className="w-3.5 h-3.5" />
           </a>
         </div>
@@ -626,7 +937,11 @@ export const HomePage: React.FC = () => {
         result={selectedMedResult}
         onReserve={(offer, medName) => {
           if (selectedMedResult) {
-            setSelectedOfferForReserve({ offer, medicationName: medName, medicationId: selectedMedResult.medication.id });
+            setSelectedOfferForReserve({
+              offer,
+              medicationName: medName,
+              medicationId: selectedMedResult.medication.id,
+            });
           }
         }}
       />
@@ -644,7 +959,7 @@ export const HomePage: React.FC = () => {
         isOpen={!!selectedOfferForReserve}
         onClose={() => setSelectedOfferForReserve(null)}
         offer={selectedOfferForReserve?.offer || null}
-        medicationName={selectedOfferForReserve?.medicationName || ''}
+        medicationName={selectedOfferForReserve?.medicationName || ""}
         medicationId={selectedOfferForReserve?.medicationId}
       />
     </div>

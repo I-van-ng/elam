@@ -5,30 +5,35 @@ import {
   MedicationSearchResult,
   Appointment,
   MedicationReservation,
-} from '../types';
+  EmergencyAiResponse,
+  EmergencyProtocolsData,
+} from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
 class ApiService {
-  private token: string | null = localStorage.getItem('elam_token');
+  private token: string | null = localStorage.getItem("elam_token");
 
   setToken(token: string | null) {
     this.token = token;
     if (token) {
-      localStorage.setItem('elam_token', token);
+      localStorage.setItem("elam_token", token);
     } else {
-      localStorage.removeItem('elam_token');
+      localStorage.removeItem("elam_token");
     }
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<T> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
     };
 
     if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+      headers["Authorization"] = `Bearer ${this.token}`;
     }
 
     try {
@@ -37,10 +42,25 @@ class ApiService {
         headers,
       });
 
-      const contentType = response.headers.get('content-type') || '';
-      const json = contentType.includes('application/json') ? await response.json() : null;
+      const contentType = response.headers.get("content-type") || "";
+      const json = contentType.includes("application/json")
+        ? await response.json()
+        : null;
       if (!response.ok) {
-        throw new Error(json?.error || json?.message || `Erreur HTTP ${response.status}`);
+        const validationDetails = Array.isArray(json?.details)
+          ? json.details
+              .map((detail: { field?: string; message?: string }) =>
+                [detail.field, detail.message].filter(Boolean).join(": "),
+              )
+              .filter(Boolean)
+              .join(" · ")
+          : "";
+        throw new Error(
+          validationDetails ||
+            json?.error ||
+            json?.message ||
+            `Erreur HTTP ${response.status}`,
+        );
       }
       return json?.data as T;
     } catch (error: any) {
@@ -51,50 +71,65 @@ class ApiService {
 
   // Auth
   async login(emailOrPhone: string, pass: string) {
-    const res = await this.request<{ user: any; token: string }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ emailOrPhone, password: pass }),
-    });
+    const res = await this.request<{ user: any; token: string }>(
+      "/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({ emailOrPhone, password: pass }),
+      },
+    );
     this.setToken(res.token);
     return res;
   }
 
   async getMe() {
-    return this.request<any>('/auth/me');
+    return this.request<any>("/auth/me");
   }
 
   async registerPatient(data: Record<string, unknown>) {
-    const res = await this.request<{ user: any; token: string }>('/auth/register/patient', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    const res = await this.request<{ user: any; token: string }>(
+      "/auth/register/patient",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
     this.setToken(res.token);
     return res;
   }
 
   async registerDoctor(data: Record<string, unknown>) {
-    const res = await this.request<{ user: any; token: string }>('/auth/register/doctor', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    const res = await this.request<{ user: any; token: string }>(
+      "/auth/register/doctor",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
     this.setToken(res.token);
     return res;
   }
 
   async registerPharmacy(data: Record<string, unknown>) {
-    const res = await this.request<{ user: any; token: string }>('/auth/register/pharmacy', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    const res = await this.request<{ user: any; token: string }>(
+      "/auth/register/pharmacy",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
     this.setToken(res.token);
     return res;
   }
 
   async registerClinic(data: Record<string, unknown>) {
-    const res = await this.request<{ user: any; token: string }>('/auth/register/clinic', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    const res = await this.request<{ user: any; token: string }>(
+      "/auth/register/clinic",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
     this.setToken(res.token);
     return res;
   }
@@ -127,58 +162,82 @@ class ApiService {
     search?: string;
   }) {
     const searchParams = new URLSearchParams();
-    if (params?.lat !== undefined) searchParams.append('lat', params.lat.toString());
-    if (params?.lng !== undefined) searchParams.append('lng', params.lng.toString());
-    if (params?.radiusKm !== undefined) searchParams.append('radiusKm', params.radiusKm.toString());
-    if (params?.isOnDuty !== undefined) searchParams.append('isOnDuty', params.isOnDuty.toString());
-    if (params?.acceptsCnamgs !== undefined) searchParams.append('acceptsCnamgs', params.acceptsCnamgs.toString());
-    if (params?.search) searchParams.append('search', params.search);
+    if (params?.lat !== undefined)
+      searchParams.append("lat", params.lat.toString());
+    if (params?.lng !== undefined)
+      searchParams.append("lng", params.lng.toString());
+    if (params?.radiusKm !== undefined)
+      searchParams.append("radiusKm", params.radiusKm.toString());
+    if (params?.isOnDuty !== undefined)
+      searchParams.append("isOnDuty", params.isOnDuty.toString());
+    if (params?.acceptsCnamgs !== undefined)
+      searchParams.append("acceptsCnamgs", params.acceptsCnamgs.toString());
+    if (params?.search) searchParams.append("search", params.search);
 
-    return this.request<PharmacyProfile[]>(`/pharmacies?${searchParams.toString()}`);
+    return this.request<PharmacyProfile[]>(
+      `/pharmacies?${searchParams.toString()}`,
+    );
   }
 
   async getPharmacy(id: string, lat?: number, lng?: number) {
-    const q = lat !== undefined && lng !== undefined ? `?lat=${lat}&lng=${lng}` : '';
+    const q =
+      lat !== undefined && lng !== undefined ? `?lat=${lat}&lng=${lng}` : "";
     return this.request<PharmacyProfile>(`/pharmacies/${id}${q}`);
   }
 
-  async searchMedicationAvailability(query: string, lat?: number, lng?: number) {
+  async searchMedicationAvailability(
+    query: string,
+    lat?: number,
+    lng?: number,
+  ) {
     const searchParams = new URLSearchParams({ q: query });
     if (lat !== undefined && lng !== undefined) {
-      searchParams.append('lat', lat.toString());
-      searchParams.append('lng', lng.toString());
+      searchParams.append("lat", lat.toString());
+      searchParams.append("lng", lng.toString());
     }
-    return this.request<MedicationSearchResult[]>(`/pharmacies/medications/search?${searchParams.toString()}`);
+    return this.request<MedicationSearchResult[]>(
+      `/pharmacies/medications/search?${searchParams.toString()}`,
+    );
   }
 
   async updateDutyStatus(isOnDuty: boolean) {
-    return this.request<PharmacyProfile>('/pharmacies/duty-status', {
-      method: 'PATCH',
+    return this.request<PharmacyProfile>("/pharmacies/duty-status", {
+      method: "PATCH",
       body: JSON.stringify({ isOnDuty }),
     });
   }
 
-  async updateStock(medicationId: string, status: string, priceFcfa?: number, quantity?: number) {
-    return this.request<any>('/pharmacies/stock', {
-      method: 'PUT',
+  async updateStock(
+    medicationId: string,
+    status: string,
+    priceFcfa?: number,
+    quantity?: number,
+  ) {
+    return this.request<any>("/pharmacies/stock", {
+      method: "PUT",
       body: JSON.stringify({ medicationId, status, priceFcfa, quantity }),
     });
   }
 
-  async createReservation(data: { pharmacyId: string; medicationId: string; quantity: number; notes?: string }) {
-    return this.request<any>('/pharmacies/reservations', {
-      method: 'POST',
+  async createReservation(data: {
+    pharmacyId: string;
+    medicationId: string;
+    quantity: number;
+    notes?: string;
+  }) {
+    return this.request<any>("/pharmacies/reservations", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
   async getPharmacyReservations() {
-    return this.request<MedicationReservation[]>('/pharmacies/reservations');
+    return this.request<MedicationReservation[]>("/pharmacies/reservations");
   }
 
   async updateReservationStatus(id: string, status: string) {
     return this.request<any>(`/pharmacies/reservations/${id}/status`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify({ status }),
     });
   }
@@ -194,19 +253,27 @@ class ApiService {
     search?: string;
   }) {
     const searchParams = new URLSearchParams();
-    if (params?.specialty) searchParams.append('specialty', params.specialty);
-    if (params?.city) searchParams.append('city', params.city);
-    if (params?.acceptsCnamgs !== undefined) searchParams.append('acceptsCnamgs', params.acceptsCnamgs.toString());
-    if (params?.acceptsTeleconsult !== undefined) searchParams.append('acceptsTeleconsult', params.acceptsTeleconsult.toString());
-    if (params?.lat !== undefined) searchParams.append('lat', params.lat.toString());
-    if (params?.lng !== undefined) searchParams.append('lng', params.lng.toString());
-    if (params?.search) searchParams.append('search', params.search);
+    if (params?.specialty) searchParams.append("specialty", params.specialty);
+    if (params?.city) searchParams.append("city", params.city);
+    if (params?.acceptsCnamgs !== undefined)
+      searchParams.append("acceptsCnamgs", params.acceptsCnamgs.toString());
+    if (params?.acceptsTeleconsult !== undefined)
+      searchParams.append(
+        "acceptsTeleconsult",
+        params.acceptsTeleconsult.toString(),
+      );
+    if (params?.lat !== undefined)
+      searchParams.append("lat", params.lat.toString());
+    if (params?.lng !== undefined)
+      searchParams.append("lng", params.lng.toString());
+    if (params?.search) searchParams.append("search", params.search);
 
     return this.request<DoctorProfile[]>(`/doctors?${searchParams.toString()}`);
   }
 
   async getDoctor(id: string, lat?: number, lng?: number) {
-    const q = lat !== undefined && lng !== undefined ? `?lat=${lat}&lng=${lng}` : '';
+    const q =
+      lat !== undefined && lng !== undefined ? `?lat=${lat}&lng=${lng}` : "";
     return this.request<DoctorProfile>(`/doctors/${id}${q}`);
   }
 
@@ -219,44 +286,59 @@ class ApiService {
     type: string;
     reason: string;
   }) {
-    return this.request<Appointment>('/appointments', {
-      method: 'POST',
+    return this.request<Appointment>("/appointments", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
   async getDoctorAppointments(status?: string, date?: string) {
     const params = new URLSearchParams();
-    if (status) params.append('status', status);
-    if (date) params.append('date', date);
-    return this.request<Appointment[]>(`/appointments/doctor?${params.toString()}`);
+    if (status) params.append("status", status);
+    if (date) params.append("date", date);
+    return this.request<Appointment[]>(
+      `/appointments/doctor?${params.toString()}`,
+    );
   }
 
   async getPatientAppointments() {
-    return this.request<Appointment[]>('/appointments/patient');
+    return this.request<Appointment[]>("/appointments/patient");
   }
 
-  async updateAppointmentStatus(id: string, status: string, doctorNotes?: string) {
+  async updateAppointmentStatus(
+    id: string,
+    status: string,
+    doctorNotes?: string,
+  ) {
     return this.request<Appointment>(`/appointments/${id}/status`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify({ status, doctorNotes }),
     });
   }
 
   // Clinics
-  async listClinics(params?: { hasEmergency247?: boolean; acceptsCnamgs?: boolean; lat?: number; lng?: number }) {
+  async listClinics(params?: {
+    hasEmergency247?: boolean;
+    acceptsCnamgs?: boolean;
+    lat?: number;
+    lng?: number;
+  }) {
     const searchParams = new URLSearchParams();
-    if (params?.hasEmergency247 !== undefined) searchParams.append('hasEmergency247', params.hasEmergency247.toString());
-    if (params?.acceptsCnamgs !== undefined) searchParams.append('acceptsCnamgs', params.acceptsCnamgs.toString());
-    if (params?.lat !== undefined) searchParams.append('lat', params.lat.toString());
-    if (params?.lng !== undefined) searchParams.append('lng', params.lng.toString());
+    if (params?.hasEmergency247 !== undefined)
+      searchParams.append("hasEmergency247", params.hasEmergency247.toString());
+    if (params?.acceptsCnamgs !== undefined)
+      searchParams.append("acceptsCnamgs", params.acceptsCnamgs.toString());
+    if (params?.lat !== undefined)
+      searchParams.append("lat", params.lat.toString());
+    if (params?.lng !== undefined)
+      searchParams.append("lng", params.lng.toString());
 
     return this.request<ClinicProfile[]>(`/clinics?${searchParams.toString()}`);
   }
 
   // Subscriptions
   async getPlans() {
-    return this.request<any[]>('/subscriptions/plans');
+    return this.request<any[]>("/subscriptions/plans");
   }
 
   // ---------------------------------------------------------------------
@@ -271,25 +353,54 @@ class ApiService {
    * formule. Le client ne peut donc pas choisir ce qu'il paie.
    */
   async initiatePayment(data: {
-    relatedTo: 'APPOINTMENT' | 'RESERVATION' | 'SUBSCRIPTION';
+    relatedTo: "APPOINTMENT" | "RESERVATION" | "SUBSCRIPTION";
     relatedId: string;
     phone: string;
-    operator: 'AIRTEL_MONEY' | 'MOOV_MONEY';
+    operator: "AIRTEL_MONEY" | "MOOV_MONEY";
   }) {
-    return this.request<PaymentInitResult>('/payments/initiate', {
-      method: 'POST',
+    return this.request<PaymentInitResult>("/payments/initiate", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
   /** Interroge l'operateur : sert au suivi apres validation sur le telephone. */
   async getPaymentStatus(transactionRef: string) {
-    return this.request<PaymentRecord>(`/payments/verify/${encodeURIComponent(transactionRef)}`);
+    return this.request<PaymentRecord>(
+      `/payments/verify/${encodeURIComponent(transactionRef)}`,
+    );
   }
 
   /** Historique des paiements de l'utilisateur connecte. */
   async getPaymentHistory() {
-    return this.request<PaymentRecord[]>('/payments/history');
+    return this.request<PaymentRecord[]>("/payments/history");
+  }
+
+  /** Protocoles de premiers secours et contacts d'urgence */
+  async getEmergencyProtocols() {
+    return this.request<EmergencyProtocolsData>("/emergency-ai/protocols");
+  }
+
+  /** Consultation de l'IA d'urgence vitale (Gemini) */
+  async consultEmergencyAi(data: {
+    message: string;
+    history?: Array<{ role: "user" | "assistant"; content: string }>;
+    situation?: string;
+    victimState?: {
+      conscious?: boolean;
+      breathing?: boolean;
+      bleeding?: boolean;
+    };
+    location?: {
+      latitude?: number;
+      longitude?: number;
+      address?: string;
+    };
+  }) {
+    return this.request<EmergencyAiResponse>("/emergency-ai/chat", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   }
 }
 
@@ -297,12 +408,12 @@ class ApiService {
 export interface PaymentRecord {
   id: string;
   transactionRef: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "CANCELLED";
   amount: number;
   cnamgsCovered: number;
   patientAmount: number;
   currency: string;
-  operator: 'AIRTEL_MONEY' | 'MOOV_MONEY' | 'SANDBOX';
+  operator: "AIRTEL_MONEY" | "MOOV_MONEY" | "SANDBOX";
   phone: string;
   provider: string;
   providerRef: string | null;

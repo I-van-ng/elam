@@ -1,34 +1,31 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  HeartPulse,
-  LogIn,
-  LogOut,
-  UserCircle,
-} from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { HeartPulse, LogIn, LogOut, Moon, Sun, UserCircle, ShieldAlert } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 interface NavbarProps {
   isPhoneFrame: boolean;
   setIsPhoneFrame: (val: boolean) => void;
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = () => {
+export const Navbar: React.FC<NavbarProps> = ({ theme, onToggleTheme }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const workspacePath =
-    user?.role === 'DOCTOR'
-      ? '/doctor/dashboard'
-      : user?.role === 'PHARMACY'
-        ? '/pharmacy/dashboard'
-        : user?.role === 'ADMIN'
-          ? '/directory'
-          : '/my-appointments';
+    user?.role === "DOCTOR"
+      ? "/doctor/dashboard"
+      : user?.role === "PHARMACY"
+        ? "/pharmacy/dashboard"
+        : user?.role === "ADMIN"
+          ? "/directory"
+          : "/my-appointments";
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -41,16 +38,50 @@ export const Navbar: React.FC<NavbarProps> = () => {
           </div>
           <div>
             <div className="flex items-center gap-1.5 leading-none">
-              <span className="font-extrabold text-xl tracking-tight text-slate-900">ELAM</span>
+              <span className="font-extrabold text-xl tracking-tight text-slate-900">
+                ELAM
+              </span>
               <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                 Santé 🇬🇦
               </span>
             </div>
-            <p className="text-[10px] font-medium text-slate-400 mt-0.5">Le réflexe santé au Gabon</p>
+            <p className="text-[10px] font-medium text-slate-400 mt-0.5">
+              Le réflexe santé au Gabon
+            </p>
           </div>
         </Link>
 
         <div className="flex items-center gap-2">
+          <Link
+            to="/emergency-ai"
+            className="tap-active inline-flex items-center gap-1.5 rounded-2xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/80 px-2.5 sm:px-3 py-2 text-xs font-black shadow-sm transition"
+            title="Assistance Secours & Gestes qui sauvent"
+          >
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
+            </span>
+            <ShieldAlert className="h-4 w-4 text-rose-600" />
+            <span className="inline">SOS Secours</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            aria-label={
+              theme === "dark"
+                ? "Activer le thème clair"
+                : "Activer le thème sombre"
+            }
+            title={theme === "dark" ? "Thème clair" : "Thème sombre"}
+            className="glass-control tap-active inline-flex h-10 w-10 items-center justify-center rounded-2xl transition"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </button>
           {user ? (
             <>
               <Link
@@ -58,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 className="hidden sm:flex tap-active items-center gap-2 rounded-2xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-slate-800"
               >
                 <UserCircle className="h-4 w-4" />
-                <span>{user.firstName || 'Mon espace'}</span>
+                <span>{user.firstName || "Mon espace"}</span>
               </Link>
               <button
                 type="button"
@@ -73,10 +104,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
           ) : (
             <Link
               to="/login"
+              aria-label="Se connecter"
               className="tap-active inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700"
             >
               <LogIn className="h-4 w-4" />
-              <span>Connexion</span>
+              <span className="hidden sm:inline">Connexion</span>
             </Link>
           )}
         </div>
