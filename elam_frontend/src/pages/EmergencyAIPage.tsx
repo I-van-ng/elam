@@ -191,11 +191,42 @@ export const EmergencyAIPage: React.FC = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const preferredFrenchVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const [copiedCoords, setCopiedCoords] = useState(false);
 
   // Métronome RCP (110 BPM)
   const [isMetronomeActive, setIsMetronomeActive] = useState(false);
   const [metronomeBeat, setMetronomeBeat] = useState(false);
+
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+
+    const chooseFrenchVoice = () => {
+      const frenchVoices = window.speechSynthesis
+        .getVoices()
+        .filter((voice) => voice.lang.toLowerCase().startsWith("fr"));
+
+      frenchVoices.sort((a, b) => {
+        const score = (voice: SpeechSynthesisVoice) => {
+          const name = voice.name.toLowerCase();
+          return (
+            (/natural|naturel|neural|online|premium/.test(name) ? 10 : 0) +
+            (/fr-fr|france|french|français|francaise/.test(name) ? 2 : 0) +
+            (voice.lang.toLowerCase() === "fr-fr" ? 1 : 0) +
+            (!voice.localService ? 1 : 0)
+          );
+        };
+        return score(b) - score(a);
+      });
+
+      preferredFrenchVoiceRef.current = frenchVoices[0] ?? null;
+    };
+
+    chooseFrenchVoice();
+    window.speechSynthesis.addEventListener("voiceschanged", chooseFrenchVoice);
+    return () =>
+      window.speechSynthesis.removeEventListener("voiceschanged", chooseFrenchVoice);
+  }, []);
   const audioContextRef = useRef<AudioContext | null>(null);
   const metronomeIntervalRef = useRef<number | null>(null);
 
@@ -312,8 +343,12 @@ export const EmergencyAIPage: React.FC = () => {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = "fr-FR";
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.rate = 0.94;
+    utterance.pitch = 1.02;
+    if (preferredFrenchVoiceRef.current) {
+      utterance.voice = preferredFrenchVoiceRef.current;
+      utterance.lang = preferredFrenchVoiceRef.current.lang;
+    }
 
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
