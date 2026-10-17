@@ -17,7 +17,6 @@ import {
   Check,
   AlertTriangle,
   MapPin,
-  Bot,
   RotateCcw,
   Sparkles,
 } from "lucide-react";
@@ -720,8 +719,8 @@ export const EmergencyAIPage: React.FC = () => {
           {/* Header du Chat */}
           <div className="px-5 py-3.5 bg-slate-800/90 border-b border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center text-white shadow-md">
-                <Bot className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/25">
+                <HeartPulse className="h-5 w-5" strokeWidth={2.6} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
