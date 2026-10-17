@@ -408,7 +408,7 @@ export const EmergencyAIPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 pb-20 selection:bg-rose-500 selection:text-white">
+    <div className="elam-emergency-page min-h-screen bg-slate-900 text-slate-100 pb-20 selection:bg-rose-500 selection:text-white">
       {/* 1. Bandeau Alerte & Numéros d'urgence en 1 clic */}
       <section className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white px-4 py-3 shadow-lg sticky top-16 z-30">
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3">
