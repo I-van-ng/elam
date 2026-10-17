@@ -553,6 +553,40 @@ export const HomePage: React.FC = () => {
         </div>
       </Link>
 
+      {/* Mission and long-term ambition */}
+      <section
+        aria-labelledby="elam-mission-title"
+        className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/70 p-5 sm:p-6 shadow-sm"
+      >
+        <div className="max-w-2xl">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">
+            ELAM Santé · Gabon
+          </p>
+          <h2
+            id="elam-mission-title"
+            className="mt-1 text-lg sm:text-xl font-black tracking-tight text-slate-900"
+          >
+            La santé plus simple, plus proche
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            ELAM rapproche les patients et les professionnels de santé. La
+            plateforme aide chacun à rechercher un médicament, une pharmacie de
+            garde, un médecin ou un établissement de santé, et à simplifier ses
+            démarches pour accéder aux soins.
+          </p>
+        </div>
+        <div className="mt-4 rounded-2xl border border-emerald-100 bg-white/80 p-4">
+          <h3 className="text-xs font-black uppercase tracking-wide text-emerald-800">
+            Notre ambition
+          </h3>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+            Devenir un acteur de référence de la santé numérique dans la
+            sous-région, en facilitant l’accès aux soins pour les patients et le
+            travail des professionnels de santé.
+          </p>
+        </div>
+      </section>
+
       {/* 3. Quick Action Hub (4 Clean Touch Tiles) */}
       <div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

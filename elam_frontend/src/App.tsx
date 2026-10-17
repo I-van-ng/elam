@@ -27,9 +27,9 @@ import { useAuth } from "./context/AuthContext";
 
 const SEO_PAGES: Record<string, { title: string; description: string }> = {
   "/": {
-    title: "ELAM Santé — Trouver des soins au Gabon",
+    title: "ELAM Santé — La santé plus simple, plus proche au Gabon",
     description:
-      "Trouvez des pharmacies, médecins, cliniques et services d’urgence au Gabon avec ELAM Santé.",
+      "ELAM Santé rapproche patients et professionnels au Gabon. Recherchez pharmacies, médicaments, médecins, établissements de santé et services d’urgence.",
   },
   "/clinics": {
     title: "Cliniques et centres de santé au Gabon | ELAM Santé",
