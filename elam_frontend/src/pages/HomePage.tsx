@@ -556,10 +556,10 @@ export const HomePage: React.FC = () => {
       {/* Mission and long-term ambition */}
       <section
         aria-labelledby="elam-mission-title"
-        className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/70 p-5 sm:p-6 shadow-sm"
+        className="elam-mission-card rounded-3xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/70 p-5 sm:p-6 shadow-sm"
       >
         <div className="max-w-2xl">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">
+          <p className="elam-mission-label text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">
             ELAM Santé · Gabon
           </p>
           <h2
@@ -575,14 +575,17 @@ export const HomePage: React.FC = () => {
             démarches pour accéder aux soins.
           </p>
         </div>
-        <div className="mt-4 rounded-2xl border border-emerald-100 bg-white/80 p-4">
-          <h3 className="text-xs font-black uppercase tracking-wide text-emerald-800">
+        <div className="elam-mission-subcard mt-4 rounded-2xl border border-emerald-100 bg-white/80 p-4">
+          <h3 className="elam-mission-subtitle text-xs font-black uppercase tracking-wide text-emerald-800">
             Notre ambition
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-slate-600">
             Devenir un acteur de référence de la santé numérique dans la
             sous-région, en facilitant l’accès aux soins pour les patients et le
             travail des professionnels de santé.
+          </p>
+          <p className="mt-2 text-xs font-semibold text-emerald-800">
+            Vision portée par M. Hans Keza.
           </p>
         </div>
       </section>

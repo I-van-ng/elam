@@ -87,6 +87,21 @@ html[data-theme="dark"] .bg-emerald-50\/90 {
   background-color: rgba(5, 150, 105, 0.18);
 }
 
+html[data-theme="dark"] .elam-mission-card {
+  background: linear-gradient(135deg, #17212e 0%, #19332f 100%);
+  border-color: #31564d;
+}
+
+html[data-theme="dark"] .elam-mission-label,
+html[data-theme="dark"] .elam-mission-subtitle {
+  color: #6ee7b7;
+}
+
+html[data-theme="dark"] .elam-mission-subcard {
+  background-color: #1d2938;
+  border-color: #344252;
+}
+
 html[data-theme="light"] .elam-emergency-page {
   background-color: var(--elam-page);
   color: var(--elam-text);
