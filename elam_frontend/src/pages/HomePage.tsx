@@ -544,7 +544,7 @@ export const HomePage: React.FC = () => {
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </h3>
             <p className="text-xs text-rose-100 max-w-md">
-              Guidage immédiat pas à pas (arrêt cardiaque, étouffement, hémorragie, PLS) + appel direct SAMU 1300 & Pompiers 18.
+              Guidage immédiat pas à pas (arrêt cardiaque, étouffement, hémorragie, PLS) + appel direct SAMU Social Gabonais 1488 & Pompiers 18.
             </p>
           </div>
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-2xl sm:text-3xl shrink-0 group-hover:scale-110 transition-transform">

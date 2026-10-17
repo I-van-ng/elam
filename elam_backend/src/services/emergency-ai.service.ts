@@ -44,7 +44,7 @@ export interface EmergencyAiResponse {
 
 // Contacts d'urgence officiels au Gabon (SAMU, Pompiers, Forces de sécurité, Hôpitaux)
 export const GABON_EMERGENCY_CONTACTS = [
-  { label: 'SAMU National', number: '1300', role: 'Secours médical d’urgence 24/7' },
+  { label: 'SAMU Social Gabonais', number: '1488', role: 'Urgence sanitaire et sociale, gratuit 24/7' },
   { label: 'Sapeurs-Pompiers', number: '18', role: 'Accidents de la route, incendies, sauvetage' },
   { label: 'Police Secours', number: '177', role: 'Sécurité et assistance' },
   { label: 'Gendarmerie Nationale', number: '1420', role: 'Secours et constat' },
@@ -63,7 +63,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
     summary: 'La victime ne réagit pas et ne respire plus (ou respiration anormale/gasp). Chaque seconde compte.',
     symptoms: ['Inconscience totale', 'Absence de souffle ressenti', 'Poitrine immobile', 'Teint bleuâtre/pâle'],
     steps: [
-      'Appelez IMMÉDIATEMENT le SAMU (1300) ou faites-le appeler par un témoin.',
+      'Appelez IMMÉDIATEMENT le SAMU Social Gabonais (1488) ou faites-le appeler par un témoin.',
       'Allongez la victime sur le dos, sur un sol DUR et plat.',
       'Placez le talon d’une main au centre de sa poitrine, l’autre main croisée par-dessus, bras bien tendus.',
       'Comprimez la poitrine de 5 à 6 cm de profondeur à un rythme de 100 à 120 battements par minute (rythme de la chanson "Stayin\' Alive").',
@@ -76,7 +76,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
       'Ne vous arrêtez pas de masser sauf épuisement physique ou relais.',
     ],
     emergencyNumbers: [
-      { label: 'SAMU', number: '1300' },
+      { label: 'SAMU Social Gabonais', number: '1488' },
       { label: 'Pompiers', number: '18' },
     ],
   },
@@ -91,7 +91,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
       'Donnez 5 CLAQUES vigoureuses dans le dos entre les deux omoplates avec le plat de la main.',
       'Si inefficace, réalisez la MANŒUVRE DE HEIMLICH : placez-vous derrière la victime, poing fermé au creux de l’estomac, tirez d’un coup sec vers l’arrière et vers le haut (5 compressions abdominales).',
       'Alternez 5 claques dans le dos et 5 compressions abdominales jusqu’à expulsion du corps étranger.',
-      'Si la victime perd connaissance, allongez-la au sol et commencez immédiatement le massage cardiaque en appelant le 1300.',
+      'Si la victime perd connaissance, allongez-la au sol et commencez immédiatement le massage cardiaque en appelant le 1488.',
     ],
     doNot: [
       'Ne donnez JAMAIS à boire (risque d’aggravation de l’inhalation).',
@@ -99,7 +99,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
       'Ne tapez pas dans le dos si la victime tousse encore efficacement (laissez-la tousser).',
     ],
     emergencyNumbers: [
-      { label: 'SAMU', number: '1300' },
+      { label: 'SAMU Social Gabonais', number: '1488' },
       { label: 'Pompiers', number: '18' },
     ],
   },
@@ -116,7 +116,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
       'Maintenez la compression continue sans relâcher la pression.',
       'Posez un pansement compressif si vous devez libérer vos mains.',
       'Si le saignement ne s’arrête pas sur un membre (bras/jambe) et menace la vie, appliquez un garrot au-dessus de la plaie (notez l’heure précise).',
-      'Couvrez la victime pour éviter l’hypothermie et contactez le 1300 ou le 18.',
+      'Couvrez la victime pour éviter l’hypothermie et contactez le 1488 ou le 18.',
     ],
     doNot: [
       'Ne retirez JAMAIS un objet profondément enfoncé dans la plaie.',
@@ -124,7 +124,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
       'Ne donnez rien à boire.',
     ],
     emergencyNumbers: [
-      { label: 'SAMU', number: '1300' },
+      { label: 'SAMU Social Gabonais', number: '1488' },
       { label: 'Pompiers', number: '18' },
     ],
   },
@@ -147,7 +147,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
       'Ne lui donnez rien par voie orale.',
       'Ne la giflez pas et ne la secouez pas violemment.',
     ],
-    emergencyNumbers: [{ label: 'SAMU', number: '1300' }],
+    emergencyNumbers: [{ label: 'SAMU Social Gabonais', number: '1488' }],
   },
   stroke: {
     id: 'stroke',
@@ -163,7 +163,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
     ],
     steps: [
       'Notez immédiatement l’HEURE EXACTE des premiers symptômes.',
-      'Appelez le SAMU 1300 immédiatement en précisant "Suspicion AVC".',
+      'Appelez le SAMU Social Gabonais 1488 immédiatement en précisant "Suspicion AVC".',
       'Installez la victime allongée avec la tête légèrement surélevée (30°) ou en PLS si elle somnole.',
       'Rassurez-la et gardez-la au calme.',
     ],
@@ -172,7 +172,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
       'Ne lui donnez rien à boire.',
       'Ne la faites pas marcher ni faire d’effort.',
     ],
-    emergencyNumbers: [{ label: 'SAMU', number: '1300' }],
+    emergencyNumbers: [{ label: 'SAMU Social Gabonais', number: '1488' }],
   },
   burn: {
     id: 'burn',
@@ -185,14 +185,14 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
       'Refroidissez immédiatement avec de l’eau courante tiède/tempérée (15-20°C) pendant au moins 15 minutes.',
       'Retirez les vêtements qui ne collent pas à la peau ainsi que les bagues et montres avant le gonflement.',
       'Couvrez la brûlure avec un linge propre et sec non pelucheux ou un film plastique propre sans serrer.',
-      'Si la brûlure dépasse la taille de la paume de la main ou touche le visage/mains/organes génitaux, appelez le 18 ou le 1300.',
+      'Si la brûlure dépasse la taille de la paume de la main ou touche le visage/mains/organes génitaux, appelez le 18 ou le 1488.',
     ],
     doNot: [
       'N’appliquez JAMAIS de glace, de beurre, d’huile, de dentifrice ou de farine.',
       'Ne percez jamais les cloques (risque infectieux sévère).',
       'N’arrachez pas un vêtement collé à la brûlure.',
     ],
-    emergencyNumbers: [{ label: 'Pompiers', number: '18' }, { label: 'SAMU', number: '1300' }],
+    emergencyNumbers: [{ label: 'Pompiers', number: '18' }, { label: 'SAMU Social Gabonais', number: '1488' }],
   },
   snakebite: {
     id: 'snakebite',
@@ -214,7 +214,7 @@ export const EMERGENCY_PROTOCOLS: Record<string, EmergencyProtocol> = {
       'N’incisez pas la plaie et ne brûlez pas.',
       'N’utilisez pas de pierre noire ou remèdes traditionnels agressifs.',
     ],
-    emergencyNumbers: [{ label: 'SAMU', number: '1300' }, { label: 'CHUL Urgences', number: '+24111799000' }],
+    emergencyNumbers: [{ label: 'SAMU Social Gabonais', number: '1488' }, { label: 'CHUL Urgences', number: '+24111799000' }],
   },
 };
 
@@ -247,7 +247,7 @@ function generateLocalMedicalResponse(request: EmergencyAiRequest): EmergencyAiR
 
     const reply = `🚨 **URGENCE : ${matchedProtocol.title.toUpperCase()}**
 
-⚠️ **Appelez immédiatement les secours au Gabon : SAMU 1300 ou Sapeurs-Pompiers 18 !**
+⚠️ **Appelez immédiatement les secours au Gabon : SAMU Social Gabonais 1488 ou Sapeurs-Pompiers 18 !**
 
 📋 **GESTES À FAIRE IMMÉDIATEMENT :**
 ${stepsFormatted}
@@ -271,7 +271,7 @@ Rassurez la victime, restez à ses côtés et surveillez constamment sa respirat
     reply: `Bonjour, je suis l'assistant d'urgence ELAM. Je vais vous guider pas à pas avant l'arrivée des secours.
 
 🚨 **Numéros d'urgence vitale au Gabon :**
-- **SAMU : 1300** (appel gratuit)
+- **SAMU Social Gabonais : 1488** (appel gratuit)
 - **Sapeurs-Pompiers : 18** (accidents, traumatismes)
 
 Pouvez-vous me préciser rapidement :
@@ -318,7 +318,7 @@ export class EmergencyAiService {
 Ton rôle UNIQUE et CRITIQUE est de guider un témoin ou un secouriste AVANT l'arrivée des services d'urgence.
 
 RÈGLES VITALES ABSOLUES :
-1. Rappelle toujours de composer en priorité le 1300 (SAMU Gabon) ou le 18 (Sapeurs-Pompiers) si une vie est en danger.
+1. Rappelle toujours de composer en priorité le 1488 (SAMU Social Gabonais) ou le 18 (Sapeurs-Pompiers) si une vie est en danger.
 2. Écris en français très clair, calme, direct et empathique.
 3. Formate tes conseils sous forme de liste numérotée très courte (1., 2., 3.) contenant uniquement les ACTIONS physiques immédiates à poser.
 4. Pas de longues explications théoriques : la personne est en état de stress ou en panique.
@@ -381,7 +381,7 @@ RÈGLES VITALES ABSOLUES :
       const data = (await response.json()) as any;
       const textReply =
         data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        'Veuillez appeler le 1300 immédiatement.';
+        'Veuillez appeler le 1488 immédiatement.';
 
       return {
         reply: textReply,

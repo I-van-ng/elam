@@ -27,7 +27,7 @@ import { EmergencyProtocol, EmergencyContact } from "../types";
 
 // Contacts d'urgence par défaut au Gabon
 const defaultContacts: EmergencyContact[] = [
-  { label: "SAMU Gabon", number: "1300", role: "Secours médical d'urgence (Gratuit)" },
+  { label: "SAMU Social Gabonais", number: "1488", role: "Urgence sanitaire et sociale (Gratuit)" },
   { label: "Sapeurs-Pompiers", number: "18", role: "Accidents, incendies, sauvetage" },
   { label: "Police Secours", number: "177", role: "Sécurité & assistance" },
   { label: "Urgences CHUL", number: "+24111799000", role: "Hôpital Universitaire Libreville" },
@@ -43,7 +43,7 @@ const localProtocols: EmergencyProtocol[] = [
     summary: "Victime inconsciente et qui ne respire plus. Massage cardiaque immédiat nécessaire.",
     symptoms: ["Ne réagit à aucune stimulation", "Aucun souffle ressenti", "Poitrine immobile"],
     steps: [
-      "Appelez immédiatement le 1300 (SAMU) ou criez à l'aide.",
+      "Appelez immédiatement le 1488 (SAMU Social Gabonais) ou criez à l'aide.",
       "Allongez la victime sur le dos sur une surface dure.",
       "Placez vos deux mains croisées au centre de la poitrine, bras tendus.",
       "Comprimez de 5 à 6 cm au rythme de 100 à 120 battements par minute (utilisez le métronome ci-dessous).",
@@ -54,7 +54,7 @@ const localProtocols: EmergencyProtocol[] = [
       "Ne donnez rien à boire ni à manger.",
       "Ne cessez pas le massage avant l'arrivée des secours.",
     ],
-    emergencyNumbers: [{ label: "SAMU", number: "1300" }],
+    emergencyNumbers: [{ label: "SAMU Social Gabonais", number: "1488" }],
   },
   {
     id: "choking",
@@ -74,7 +74,7 @@ const localProtocols: EmergencyProtocol[] = [
       "N'enfoncez pas les doigts à l'aveugle dans la bouche.",
       "N'intervenez pas si la personne tousse encore fort.",
     ],
-    emergencyNumbers: [{ label: "SAMU", number: "1300" }, { label: "Pompiers", number: "18" }],
+    emergencyNumbers: [{ label: "SAMU Social Gabonais", number: "1488" }, { label: "Pompiers", number: "18" }],
   },
   {
     id: "bleeding",
@@ -95,7 +95,7 @@ const localProtocols: EmergencyProtocol[] = [
       "Ne relâchez pas la pression pour 'regarder'.",
       "Ne desserrez jamais un garrot posé.",
     ],
-    emergencyNumbers: [{ label: "SAMU", number: "1300" }],
+    emergencyNumbers: [{ label: "SAMU Social Gabonais", number: "1488" }],
   },
   {
     id: "unconscious",
@@ -116,7 +116,7 @@ const localProtocols: EmergencyProtocol[] = [
       "Ne lui donnez rien à boire ou médicament.",
       "Ne la secouez pas.",
     ],
-    emergencyNumbers: [{ label: "SAMU", number: "1300" }],
+    emergencyNumbers: [{ label: "SAMU Social Gabonais", number: "1488" }],
   },
   {
     id: "stroke",
@@ -131,7 +131,7 @@ const localProtocols: EmergencyProtocol[] = [
     ],
     steps: [
       "Notez l'HEURE EXACTE du début des symptômes.",
-      "Appelez le SAMU 1300 immédiatement en indiquant 'Suspicion AVC'.",
+      "Appelez le SAMU Social Gabonais 1488 immédiatement en indiquant 'Suspicion AVC'.",
       "Installez la personne confortablement allongée, tête surélevée à 30°.",
       "Gardez-la calme et ne la laissez pas se lever.",
     ],
@@ -140,7 +140,7 @@ const localProtocols: EmergencyProtocol[] = [
       "Ne lui donnez ni à boire ni à manger.",
       "N'attendez pas de voir si les symptômes s'améliorent.",
     ],
-    emergencyNumbers: [{ label: "SAMU", number: "1300" }],
+    emergencyNumbers: [{ label: "SAMU Social Gabonais", number: "1488" }],
   },
   {
     id: "burn",
@@ -153,7 +153,7 @@ const localProtocols: EmergencyProtocol[] = [
       "Arrosez immédiatement avec de l'eau tempérée courante (15-20°C) pendant 15 minutes.",
       "Retirez les vêtements qui n'adhèrent pas à la peau ainsi que bagues/montres.",
       "Couvrez avec un tissu propre stérile ou film alimentaire sans serrer.",
-      "Contactez le 18 ou le 1300 si la brûlure est étendue ou touche le visage.",
+      "Contactez le 18 ou le 1488 si la brûlure est étendue ou touche le visage.",
     ],
     doNot: [
       "Ne mettez jamais de glace, de beurre, d'huile ou de dentifrice.",
@@ -183,7 +183,7 @@ export const EmergencyAIPage: React.FC = () => {
     {
       id: "intro",
       sender: "ai",
-      text: "Bonjour, je suis l'IA d'urgence ELAM. 🚨\nSi une personne est en détresse vitale, appelez d'abord le 1300 (SAMU) ou le 18 (Pompiers) !\n\nDécrivez-moi en quelques mots ce qui se passe ou choisissez une situation d'urgence ci-dessous.",
+      text: "Bonjour, je suis l'IA d'urgence ELAM. 🚨\nSi une personne est en détresse vitale, appelez d'abord le 1488 (SAMU Social Gabonais) ou le 18 (Pompiers) !\n\nDécrivez-moi en quelques mots ce qui se passe ou choisissez une situation d'urgence ci-dessous.",
       timestamp: "Maintenant",
       isAiGenerated: false,
     },
@@ -378,7 +378,7 @@ export const EmergencyAIPage: React.FC = () => {
       const localMsg: ChatItem = {
         id: (Date.now() + 1).toString(),
         sender: "ai",
-        text: `⚠️ **Consignes d'urgence immédiates :**\n\n1. Appelez le **1300 (SAMU)** ou le **18 (Pompiers)**.\n2. Assurez-vous que les lieux sont sécurisés pour vous et la victime.\n3. Vérifiez si la personne réagit et respire.\n4. Si elle ne respire plus : démarrez immédiatement le massage cardiaque (utilisez le métronome ci-dessus à 110 BPM).\n5. Si elle saigne abondamment : comprimez fort la plaie sans relâcher.`,
+        text: `⚠️ **Consignes d'urgence immédiates :**\n\n1. Appelez le **1488 (SAMU Social Gabonais)** ou le **18 (Pompiers)**.\n2. Assurez-vous que les lieux sont sécurisés pour vous et la victime.\n3. Vérifiez si la personne réagit et respire.\n4. Si elle ne respire plus : démarrez immédiatement le massage cardiaque (utilisez le métronome ci-dessus à 110 BPM).\n5. Si elle saigne abondamment : comprimez fort la plaie sans relâcher.`,
         timestamp: "À l'instant",
         isAiGenerated: false,
       };
@@ -424,12 +424,12 @@ export const EmergencyAIPage: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-2">
             <a
-              href="tel:1300"
+              href="tel:1488"
               className="tap-active inline-flex items-center gap-1.5 bg-white text-red-700 px-3 py-1.5 rounded-full text-xs font-black shadow-md hover:bg-red-50 transition"
-              title="Appeler le SAMU Gabon (Gratuit)"
+              title="Appeler le SAMU Social Gabonais (Gratuit)"
             >
               <PhoneCall className="w-3.5 h-3.5 fill-current" />
-              <span>SAMU : 1300</span>
+              <span>SAMU Social : 1488</span>
             </a>
             <a
               href="tel:18"
