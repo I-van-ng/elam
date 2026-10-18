@@ -10,6 +10,7 @@ import { HeartPulse } from "lucide-react";
 import { AuthProvider } from "./context/AuthContext";
 import { Navbar } from "./components/Navbar";
 import { BottomNav } from "./components/BottomNav";
+import { Footer } from "./components/Footer";
 import { HomePage } from "./pages/HomePage";
 import { PharmaciesPage } from "./pages/PharmaciesPage";
 import { DoctorsPage } from "./pages/DoctorsPage";
@@ -22,6 +23,7 @@ import { DirectoryManagementPage } from "./pages/DirectoryManagementPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { EmergencyAIPage } from "./pages/EmergencyAIPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
 import { UserRole } from "./types";
 import { useAuth } from "./context/AuthContext";
 
@@ -56,6 +58,11 @@ const SEO_PAGES: Record<string, { title: string; description: string }> = {
   "/pricing": {
     title: "Offres ELAM Santé",
     description: "Découvrez les offres et services proposés par ELAM Santé au Gabon.",
+  },
+  "/confidentialite": {
+    title: "Données personnelles et confidentialité | ELAM Santé",
+    description:
+      "Informations sur les données personnelles traitées par ELAM Santé, leurs usages et les droits des utilisateurs.",
   },
 };
 
@@ -245,6 +252,7 @@ export function App() {
                   }
                 />
                 <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/confidentialite" element={<PrivacyPage />} />
                 <Route
                   path="/directory"
                   element={
@@ -255,6 +263,8 @@ export function App() {
                 />
               </Routes>
             </main>
+
+            <Footer />
 
             <BottomNav isPhoneFrame={isPhoneFrame} />
           </div>

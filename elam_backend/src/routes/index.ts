@@ -8,6 +8,7 @@ import searchRoutes from './search.routes.js';
 import subscriptionRoutes from './subscription.routes.js';
 import paymentRoutes from './payment.routes.js';
 import emergencyAiRoutes from './emergency-ai.routes.js';
+import legalRoutes from './legal.routes.js';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/search', searchRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/emergency-ai', emergencyAiRoutes);
+router.use('/legal', legalRoutes);
 
 export default router;

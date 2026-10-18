@@ -1,10 +1,21 @@
 {
   "version": 2,
-  "buildCommand": "npm ci && npx prisma generate && npm run build",
+  "buildCommand": "npm ci --include=dev && npx prisma generate && npm run build",
   "routes": [
     {
       "src": "/(.*)",
       "dest": "api/index.ts"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
+      ]
     }
   ]
 }

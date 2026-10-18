@@ -4,7 +4,7 @@ import { Heart, HeartPulse, ShieldCheck, PhoneCall, Mail, ExternalLink } from 'l
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-12 pb-8 border-t border-slate-800">
+    <footer className="bg-slate-900 text-slate-300 pt-12 pb-28 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Col 1 */}
@@ -109,6 +109,9 @@ export const Footer: React.FC = () => {
 
         <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
           <p>© 2026 ELAM Health Gabon. Porteur du projet : Mba Ndong Hans.</p>
+          <Link to="/confidentialite" className="hover:text-emerald-400 transition">
+            Données personnelles et confidentialité
+          </Link>
           <p className="flex items-center gap-1">
             Développé avec <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> pour le système de santé gabonais
           </p>
